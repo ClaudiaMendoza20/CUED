@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Historial de Cálculos</title>
+
+<style>
+body{
+    font-family: Arial;
+    background:#07121f;
+    color:white;
+    padding:30px;
+}
+
+.container{
+    max-width:600px;
+    margin:auto;
+}
+
+.item{
+    background:#0f2238;
+    padding:15px;
+    margin:10px 0;
+    border-radius:10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h2>📊 Historial de Cálculos</h2>
+
+    <div id="lista"></div>
+
+    <button onclick="volver()">← Volver</button>
+</div>
+
+<script>
+// 🔐 PROTEGER
+if(localStorage.getItem("login") !== "true"){
+    window.location="login.html";
+}
+
+function volver(){
+    window.location="dashboard.html";
+}
+
+async function cargar(){
+    const res = await fetch("http://localhost:3000/calculos");
+    const data = await res.json();
+
+    const lista = document.getElementById("lista");
+
+    lista.innerHTML = "";
+
+    data.forEach(c=>{
+        lista.innerHTML += `
+            <div class="item">
+                ⚡ Potencia: ${c.power} W <br>
+                🔌 Voltaje: ${c.voltage} V <br>
+                🔥 Corriente: ${c.current.toFixed(2)} A
+            </div>
+        `;
+    });
+}
+
+cargar();
+</script>
+
+</body>
+</html>

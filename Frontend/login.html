@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Login</title>
+
+<style>
+body{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+    background:linear-gradient(135deg,#07121f,#0b1f35);
+    font-family:sans-serif;
+}
+
+.box{
+    background:#0f2238;
+    padding:40px;
+    border-radius:15px;
+    width:300px;
+    text-align:center;
+    color:white;
+}
+
+input{
+    width:100%;
+    padding:10px;
+    margin:10px 0;
+    border:none;
+    border-radius:8px;
+}
+
+button{
+    width:100%;
+    padding:10px;
+    background:#FFD700;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+    <h2>Login</h2>
+
+    <input id="user" placeholder="Usuario">
+    <input id="pass" type="password" placeholder="Contraseña">
+
+    <button onclick="login()">Entrar</button>
+</div>
+
+<script>
+async function login(){
+    const res = await fetch("http://localhost:3000/login",{
+        method:"POST",
+        headers:{ "Content-Type":"application/json"},
+        body: JSON.stringify({
+            username: user.value,
+            password: pass.value
+        })
+    });
+
+    const data = await res.json();
+
+    if(data.success){
+        localStorage.setItem("login","true");
+        window.location="dashboard.html";
+    }else{
+        alert(data.error);
+    }
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>CUED - Sistema Contra Incendios</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Segoe UI;
+}
+
+body{
+display:flex;
+background:#07121f;
+color:white;
+}
+
+/* SIDEBAR */
+
+.sidebar{
+width:240px;
+height:100vh;
+background:#0f2238;
+padding:20px;
+display:flex;
+flex-direction:column;
+justify-content:space-between;
+}
+
+.logo{
+font-size:20px;
+font-weight:bold;
+margin-bottom:20px;
+}
+
+.logo span{
+color:#ffc400;
+}
+
+.menu a{
+display:block;
+padding:12px;
+margin:6px 0;
+color:#cfd8dc;
+text-decoration:none;
+border-radius:8px;
+transition:.2s;
+}
+
+.menu a:hover{
+background:#12263a;
+}
+
+.active{
+background:#12263a;
+color:#ffc400 !important;
+}
+
+/* MAIN */
+
+.main{
+flex:1;
+padding:30px;
+}
+
+h1{
+margin-bottom:5px;
+}
+
+.subtitle{
+color:#9fb3c8;
+margin-bottom:30px;
+}
+
+.grid{
+display:grid;
+grid-template-columns:350px 1fr;
+gap:30px;
+}
+
+/* CARD */
+
+.card{
+background:#0f2238;
+padding:25px;
+border-radius:15px;
+margin-bottom:20px;
+}
+
+.card h3{
+margin-bottom:20px;
+}
+
+input{
+width:100%;
+padding:12px;
+margin-top:5px;
+margin-bottom:15px;
+border:none;
+border-radius:8px;
+background:#07121f;
+color:white;
+}
+
+button{
+padding:12px;
+border:none;
+border-radius:10px;
+cursor:pointer;
+font-weight:bold;
+}
+
+.btn{
+background:#ffc400;
+color:black;
+}
+
+.btn-secondary{
+background:#1b3b5a;
+color:white;
+}
+
+/* RESULT */
+
+.result p{
+margin:10px 0;
+}
+
+/* PLANO */
+
+.canvas-container{
+background:#07121f;
+border-radius:15px;
+padding:20px;
+text-align:center;
+}
+
+canvas{
+background:#001a33;
+border-radius:10px;
+}
+
+.buttons{
+margin-top:20px;
+display:flex;
+gap:10px;
+justify-content:center;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+
+<div>
+
+<div class="logo"><span>CUED</span> Solutions</div>
+
+<div class="menu">
+
+<a href="dashboard.html"><i class="fa fa-chart-line"></i> Dashboard</a>
+<a href="proyectos.html"><i class="fa fa-folder"></i> Proyectos</a>
+<a href="electrico.html"><i class="fa fa-bolt"></i> Eléctrico</a>
+<a href="hidraulico.html"><i class="fa fa-droplet"></i> Hidráulico</a>
+<a href="gas.html"><i class="fa fa-wind"></i> Gas / Aire</a>
+<a href="hvac.html"><i class="fa fa-fan"></i> HVAC</a>
+<a class="active"><i class="fa fa-fire"></i> Contra Incendios</a>
+<a href="cuadro_carga.html"><i class="fa fa-table"></i> Cuadro de Carga</a>
+<a href="cotizacion.html"><i class="fa fa-file-invoice-dollar"></i> Cotización</a>
+<a href="usuarios.html"><i class="fa fa-users"></i> Usuarios</a>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="main">
+
+<h1>🔥 Sistema Contra Incendios</h1>
+<div class="subtitle">Diseño automático de red de rociadores</div>
+
+<div class="grid">
+
+<!-- PARAMETROS -->
+
+<div>
+
+<div class="card">
+
+<h3>⚙ Parámetros del Área</h3>
+
+<label>Ancho (m)</label>
+<input id="ancho" value="20">
+
+<label>Largo (m)</label>
+<input id="largo" value="20">
+
+<label>Espaciado S (m)</label>
+<input id="espS" value="4">
+
+<label>Espaciado R (m)</label>
+<input id="espR" value="4">
+
+<button class="btn" onclick="calcular()">Calcular Sistema</button>
+
+</div>
+
+<div class="card result">
+
+<h3>📊 Resumen de Materiales</h3>
+
+<p>Rociadores: <b id="rociadores">0</b></p>
+<p>Tubería Ramal: <b id="ramal">0</b> m</p>
+<p>Tubería Principal: <b id="principal">0</b> m</p>
+
+</div>
+
+</div>
+
+<!-- PLANO -->
+
+<div class="card">
+
+<h3>📐 Vista de Planta</h3>
+
+<div class="canvas-container">
+
+<canvas id="plano" width="500" height="500"></canvas>
+
+<div class="buttons">
+
+<button class="btn-secondary" onclick="exportar()">Exportar DXF</button>
+<button class="btn" onclick="guardar()">Guardar Proyecto</button>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+let resultado={}
+
+function calcular(){
+
+let ancho=parseFloat(document.getElementById("ancho").value)
+let largo=parseFloat(document.getElementById("largo").value)
+let espS=parseFloat(document.getElementById("espS").value)
+let espR=parseFloat(document.getElementById("espR").value)
+
+/* CALCULO */
+
+let columnas=Math.ceil(ancho/espS)
+let filas=Math.ceil(largo/espR)
+
+let rociadores=columnas*filas
+let tuberiaRamal=filas*ancho
+let tuberiaPrincipal=largo
+
+document.getElementById("rociadores").innerText=rociadores
+document.getElementById("ramal").innerText=tuberiaRamal
+document.getElementById("principal").innerText=tuberiaPrincipal
+
+resultado={
+ancho,
+largo,
+espS,
+espR,
+rociadores,
+tuberiaRamal,
+tuberiaPrincipal
+}
+
+dibujar(columnas,filas)
+
+}
+
+function dibujar(columnas,filas){
+
+let canvas=document.getElementById("plano")
+let ctx=canvas.getContext("2d")
+
+ctx.clearRect(0,0,500,500)
+
+let margen=50
+let w=400
+let h=400
+
+ctx.strokeStyle="#ffffff"
+ctx.strokeRect(margen,margen,w,h)
+
+let dx=w/(columnas-1)
+let dy=h/(filas-1)
+
+ctx.fillStyle="red"
+
+for(let i=0;i<columnas;i++){
+
+for(let j=0;j<filas;j++){
+
+let x=margen+i*dx
+let y=margen+j*dy
+
+ctx.beginPath()
+ctx.arc(x,y,5,0,Math.PI*2)
+ctx.fill()
+
+}
+
+}
+
+}
+
+async function guardar(){
+
+let res=await fetch("/api/incendios",{
+
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify(resultado)
+
+})
+
+alert("Proyecto guardado")
+
+}
+
+function exportar(){
+
+alert("DXF exportado (simulado)")
+
+}
+
+</script>
+
+</body>
+</html>

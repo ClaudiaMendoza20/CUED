@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>HVAC PRO</title>
+
+<style>
+body{
+    background:#07121f;
+    color:white;
+    font-family:sans-serif;
+    padding:30px;
+}
+
+.container{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+}
+
+.card{
+    background:#0f2238;
+    padding:25px;
+    border-radius:20px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.5);
+    transition:0.3s;
+}
+
+.card:hover{
+    transform:scale(1.02);
+}
+
+input,button{
+    width:100%;
+    padding:12px;
+    margin:10px 0;
+    border:none;
+    border-radius:10px;
+}
+
+input{
+    background:#091521;
+    color:white;
+}
+
+button{
+    background:#00c2ff;
+    color:black;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.big{
+    font-size:50px;
+    color:#00c2ff;
+    font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<h1>❄️ Cálculo HVAC</h1>
+
+<div class="container">
+
+<!-- INPUT -->
+<div class="card">
+    <h2>Parámetros</h2>
+
+    <input id="area" placeholder="Área (m²)">
+    <input id="personas" placeholder="Personas">
+
+    <button onclick="calcular()">Calcular</button>
+</div>
+
+<!-- RESULTADO -->
+<div class="card">
+    <h2>Resultado</h2>
+
+    <div class="big" id="tons">-</div>
+    <p>BTU: <span id="btu"></span></p>
+</div>
+
+</div>
+
+<!-- HISTORIAL -->
+<div class="card" style="margin-top:20px;">
+    <h2>Historial</h2>
+    <div id="historial"></div>
+</div>
+
+<script>
+
+// 🔐 PROTEGER
+if(localStorage.getItem("login")!=="true"){
+    window.location="login.html";
+}
+
+// ❄️ CALCULO HVAC
+async function calcular(){
+
+    let area = parseFloat(document.getElementById("area").value);
+    let personas = parseInt(document.getElementById("personas").value);
+
+    // 🔥 formula real simplificada
+    let btu = (area * 600) + (personas * 600);
+
+    let tons = (btu / 12000).toFixed(2);
+
+    // mostrar
+    document.getElementById("tons").innerText = tons + " TR";
+    document.getElementById("btu").innerText = btu.toFixed(0);
+
+    // 💾 guardar en BD
+    await fetch("http://localhost:3000/hvac",{
+        method:"POST",
+        headers:{ "Content-Type":"application/json"},
+        body: JSON.stringify({area,personas,tons,btu})
+    });
+
+    cargarHistorial();
+}
+
+// 📥 HISTORIAL
+async function cargarHistorial(){
+
+    const res = await fetch("http://localhost:3000/hvac");
+    const data = await res.json();
+
+    let html = "";
+
+    data.forEach(h=>{
+        html += `
+        <div>
+            ❄️ ${h.area} m² → ${h.tons} TR (${h.btu} BTU)
+        </div>`;
+    });
+
+    document.getElementById("historial").innerHTML = html;
+}
+
+cargarHistorial();
+
+</script>
+
+</body>
+</html>

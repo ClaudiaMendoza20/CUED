@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Hidráulico PRO</title>
+
+<style>
+body{
+    background:#07121f;
+    color:white;
+    font-family:sans-serif;
+    padding:30px;
+}
+
+.card{
+    background:#0f2238;
+    padding:20px;
+    border-radius:15px;
+    margin-bottom:20px;
+}
+
+input,button{
+    width:100%;
+    padding:10px;
+    margin:10px 0;
+    border:none;
+    border-radius:8px;
+}
+
+button{
+    background:#1c3d5a;
+    color:white;
+    cursor:pointer;
+}
+
+.big{
+    font-size:40px;
+    color:#00e0a4;
+}
+</style>
+</head>
+
+<body>
+
+<h1>💧 Cálculo Hidráulico</h1>
+
+<div class="card">
+    <input id="gasto" placeholder="Gasto (LPM)">
+    <input id="longitud" placeholder="Longitud (m)">
+    <button onclick="calcular()">Calcular</button>
+</div>
+
+<div class="card">
+    <h2>Resultado</h2>
+    <div class="big" id="diametro">-</div>
+    <p>Bomba: <span id="bomba"></span></p>
+    <p>Cisterna: <span id="cisterna"></span></p>
+</div>
+
+<div class="card">
+    <h2>Historial</h2>
+    <div id="historial"></div>
+</div>
+
+<script>
+
+// 🔐 PROTECCIÓN
+if(localStorage.getItem("login")!=="true"){
+    window.location="login.html";
+}
+
+// 💧 CALCULO REAL
+async function calcular(){
+
+    let gasto = parseFloat(document.getElementById("gasto").value);
+    let longitud = parseFloat(document.getElementById("longitud").value);
+
+    // 🔥 convertir LPM a L/s
+    let Q = gasto / 60;
+
+    let C = 150; // PVC
+    let S = 0.02; // pendiente típica
+
+    let D = Math.pow((Q/(0.278*C*Math.pow(S,0.54))),1/2.63);
+
+    let diametroMM = (D * 1000).toFixed(0);
+
+    // seleccionar diámetro comercial
+    let diametro = "1\"";
+    if(diametroMM > 25) diametro = "1 1/4\"";
+    if(diametroMM > 32) diametro = "1 1/2\"";
+
+    // bomba
+    let bomba = "0.5 HP";
+    if(gasto > 80) bomba = "1 HP";
+    if(gasto > 120) bomba = "2 HP";
+
+    // cisterna
+    let cisterna = (gasto * 60 * 2).toFixed(0) + " L";
+
+    // mostrar
+    document.getElementById("diametro").innerText = diametro;
+    document.getElementById("bomba").innerText = bomba;
+    document.getElementById("cisterna").innerText = cisterna;
+
+    // 💾 GUARDAR EN BD
+    await fetch("http://localhost:3000/hidraulico",{
+        method:"POST",
+        headers:{ "Content-Type":"application/json"},
+        body: JSON.stringify({
+            gasto,longitud,diametro,bomba,cisterna
+        })
+    });
+
+    cargarHistorial();
+}
+
+
+// 📥 HISTORIAL
+async function cargarHistorial(){
+    const res = await fetch("http://localhost:3000/hidraulico");
+    const data = await res.json();
+
+    let html = "";
+
+    data.forEach(h=>{
+        html += `
+        <div>
+            💧 ${h.gasto} LPM → ${h.diametro} | ${h.bomba}
+        </div>`;
+    });
+
+    document.getElementById("historial").innerHTML = html;
+}
+
+cargarHistorial();
+
+</script>
+
+</body>
+</html>

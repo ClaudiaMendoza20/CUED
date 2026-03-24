@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Proyectos</title>
+
+<style>
+body{
+    background:#07121f;
+    color:white;
+    font-family:sans-serif;
+    padding:30px;
+}
+
+.box{
+    background:#0f2238;
+    padding:20px;
+    border-radius:15px;
+    margin-bottom:20px;
+}
+
+input,button{
+    width:100%;
+    margin:10px 0;
+    padding:10px;
+    border:none;
+    border-radius:8px;
+}
+
+button{
+    background:#1c3d5a;
+    color:white;
+    cursor:pointer;
+}
+
+.item{
+    background:#12263a;
+    padding:10px;
+    border-radius:8px;
+    margin:5px 0;
+}
+</style>
+</head>
+
+<body>
+
+<h1>📁 Proyectos</h1>
+
+<div class="box">
+    <h3>Agregar Proyecto</h3>
+
+    <input id="nombre" placeholder="Nombre del proyecto">
+    <input id="descripcion" placeholder="Descripción">
+
+    <button onclick="guardar()">Guardar</button>
+</div>
+
+<div class="box">
+    <h3>Lista de Proyectos</h3>
+    <div id="lista"></div>
+</div>
+
+<script>
+// 🔐 PROTEGER
+if(localStorage.getItem("login")!=="true"){
+    window.location="login.html";
+}
+
+// ➕ GUARDAR
+async function guardar(){
+    const nombre = document.getElementById("nombre").value;
+    const descripcion = document.getElementById("descripcion").value;
+
+    await fetch("http://localhost:3000/proyectos",{
+        method:"POST",
+        headers:{ "Content-Type":"application/json"},
+        body: JSON.stringify({nombre,descripcion})
+    });
+
+    cargar();
+}
+
+// 📥 CARGAR
+async function cargar(){
+    const res = await fetch("http://localhost:3000/proyectos");
+    const data = await res.json();
+
+    let html = "";
+    data.forEach(p=>{
+        html += `
+        <div class="item">
+            <b>${p.nombre}</b><br>
+            ${p.descripcion}
+        </div>`;
+    });
+
+    document.getElementById("lista").innerHTML = html;
+}
+
+// 🚀 INICIO
+cargar();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Generador de Cotizaciones</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Segoe UI;
+}
+
+body{
+display:flex;
+background:#07121f;
+color:white;
+}
+
+/* SIDEBAR */
+
+.sidebar{
+width:240px;
+height:100vh;
+background:#0f2238;
+padding:20px;
+display:flex;
+flex-direction:column;
+justify-content:space-between;
+}
+
+.logo{
+font-size:20px;
+font-weight:bold;
+margin-bottom:20px;
+}
+
+.logo span{color:#ffc400;}
+
+.menu a{
+display:block;
+padding:12px;
+margin:6px 0;
+color:#cfd8dc;
+text-decoration:none;
+border-radius:8px;
+}
+
+.menu a:hover{
+background:#12263a;
+}
+
+.active{
+background:#12263a;
+color:#ffc400 !important;
+}
+
+/* MAIN */
+
+.main{
+flex:1;
+padding:40px;
+}
+
+.header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:30px;
+}
+
+.header button{
+background:#ffc400;
+border:none;
+padding:12px 20px;
+border-radius:10px;
+font-weight:bold;
+cursor:pointer;
+}
+
+.card{
+background:#0b2540;
+padding:30px;
+border-radius:20px;
+}
+
+.row{
+display:flex;
+gap:20px;
+margin-bottom:20px;
+}
+
+input{
+width:100%;
+padding:12px;
+background:#07121f;
+border:none;
+border-radius:10px;
+color:white;
+}
+
+/* TABLA */
+
+table{
+width:100%;
+margin-top:20px;
+border-collapse:collapse;
+}
+
+th{
+color:#8aa0b8;
+text-align:left;
+padding-bottom:10px;
+}
+
+td{
+padding:10px 0;
+}
+
+td input{
+width:90%;
+}
+
+.add{
+color:#9fb3c8;
+cursor:pointer;
+margin-top:10px;
+display:inline-block;
+}
+
+.totalBox{
+
+margin-top:40px;
+display:flex;
+justify-content:flex-end;
+
+}
+
+.total{
+background:#071a2f;
+padding:30px;
+border-radius:15px;
+width:260px;
+text-align:center;
+}
+
+.total h1{
+font-size:40px;
+color:#ffc400;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+
+<div>
+
+<div class="logo"><span>CUED</span> Solutions</div>
+
+<div class="menu">
+
+<a href="dashboard.html">Dashboard</a>
+<a href="proyectos.html">Proyectos</a>
+<a href="electrico.html">Eléctrico</a>
+<a href="hidraulico.html">Hidráulico</a>
+<a href="gas.html">Gas / Aire</a>
+<a href="hvac.html">HVAC</a>
+<a href="contra_incendios.html">Contra Incendios</a>
+<a href="cuadro_carga.html">Cuadros de Carga</a>
+<a class="active">Cotizaciones</a>
+<a href="usuarios.html">Usuarios</a>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="main">
+
+<div class="header">
+
+<div>
+<h1>Generador de Cotizaciones</h1>
+<p style="color:#8aa0b8">Elabora presupuestos técnicos</p>
+</div>
+
+<button onclick="generarPDF()">
+<i class="fa fa-download"></i> Generar PDF
+</button>
+
+</div>
+
+<div class="card">
+
+<div class="row">
+
+<input id="cliente" placeholder="Nombre del cliente / empresa">
+
+<input id="proyecto" placeholder="Referencia del proyecto">
+
+</div>
+
+<table id="tabla">
+
+<thead>
+
+<tr>
+<th>Descripción</th>
+<th>Cantidad</th>
+<th>Precio Unit.</th>
+<th>Subtotal</th>
+</tr>
+
+</thead>
+
+<tbody id="bodyTabla">
+
+<tr>
+
+<td><input class="desc"></td>
+<td><input type="number" class="cant" value="1"></td>
+<td><input type="number" class="precio" value="0"></td>
+<td class="sub">$0</td>
+
+</tr>
+
+</tbody>
+
+</table>
+
+<div class="add" onclick="agregarFila()">
++ Agregar concepto
+</div>
+
+<div class="totalBox">
+
+<div class="total">
+
+<p>Inversión total estimada</p>
+
+<h1 id="total">$0</h1>
+
+</div>
+
+</div>
+
+<button style="margin-top:20px" onclick="guardar()">
+Guardar Cotización
+</button>
+
+</div>
+
+</div>
+
+<script>
+
+const tabla=document.getElementById("bodyTabla")
+
+function agregarFila(){
+
+let tr=document.createElement("tr")
+
+tr.innerHTML=`
+
+<td><input class="desc"></td>
+<td><input type="number" class="cant" value="1"></td>
+<td><input type="number" class="precio" value="0"></td>
+<td class="sub">$0</td>
+
+`
+
+tabla.appendChild(tr)
+
+}
+
+document.addEventListener("input",calcular)
+
+function calcular(){
+
+let total=0
+
+let filas=tabla.querySelectorAll("tr")
+
+filas.forEach(f=>{
+
+let cant=f.querySelector(".cant").value
+let precio=f.querySelector(".precio").value
+
+let sub=cant*precio
+
+f.querySelector(".sub").innerText="$"+sub
+
+total+=sub
+
+})
+
+document.getElementById("total").innerText="$"+total
+
+}
+
+async function guardar(){
+
+let cliente=document.getElementById("cliente").value
+let proyecto=document.getElementById("proyecto").value
+
+let items=[]
+
+let filas=tabla.querySelectorAll("tr")
+
+filas.forEach(f=>{
+
+let desc=f.querySelector(".desc").value
+let cant=f.querySelector(".cant").value
+let precio=f.querySelector(".precio").value
+
+items.push({desc,cant,precio})
+
+})
+
+await fetch("/api/cotizacion",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+
+cliente,
+proyecto,
+items
+
+})
+
+})
+
+alert("Cotización guardada")
+
+}
+
+function generarPDF(){
+
+window.open("/api/cotizacion/pdf")
+
+}
+
+</script>
+
+</body>
+</html>
