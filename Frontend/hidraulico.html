@@ -1,141 +1,186 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>Hidráulico PRO</title>
-
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CUED - Hidráulico</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
-body{
-    background:#07121f;
-    color:white;
-    font-family:sans-serif;
-    padding:30px;
-}
-
-.card{
-    background:#0f2238;
-    padding:20px;
-    border-radius:15px;
-    margin-bottom:20px;
-}
-
-input,button{
-    width:100%;
-    padding:10px;
-    margin:10px 0;
-    border:none;
-    border-radius:8px;
-}
-
-button{
-    background:#1c3d5a;
-    color:white;
-    cursor:pointer;
-}
-
-.big{
-    font-size:40px;
-    color:#00e0a4;
-}
+.calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+.result-card{background:#0f1f38;border:1px solid rgba(0,224,164,0.15);border-radius:16px;padding:28px;text-align:center;}
+.result-big{font-family:'Rajdhani',sans-serif;font-size:72px;font-weight:700;color:#00e0a4;line-height:1;}
+.result-unit{font-size:22px;color:rgba(0,224,164,0.5);}
+.hist-scroll{max-height:220px;overflow-y:auto;}
 </style>
 </head>
-
 <body>
+<div id="sidebar-container"></div>
 
-<h1>💧 Cálculo Hidráulico</h1>
+<div class="main">
+    <div class="page-header">
+        <div class="page-title">
+            <h1>💧 Cálculos Hidráulicos</h1>
+            <p>Dimensionamiento de tuberías y equipos de bombeo.</p>
+        </div>
+    </div>
 
-<div class="card">
-    <input id="gasto" placeholder="Gasto (LPM)">
-    <input id="longitud" placeholder="Longitud (m)">
-    <button onclick="calcular()">Calcular</button>
+    <div class="calc-grid">
+        <div class="card">
+            <h3>Demanda de Agua</h3>
+
+            <label>Gasto Requerido (LPM)</label>
+            <input id="gasto" type="number" value="50" placeholder="Litros por minuto">
+
+            <label>Longitud de Red (m)</label>
+            <input id="longitud" type="number" value="30" placeholder="Metros">
+
+            <label>Material de Tubería</label>
+            <select id="material">
+                <option value="150">PVC (C=150)</option>
+                <option value="130">CPVC (C=130)</option>
+                <option value="100">Acero galvanizado (C=100)</option>
+            </select>
+
+            <label>Desnivel (m) — positivo=subida</label>
+            <input id="desnivel" type="number" value="0" placeholder="0">
+
+            <div style="margin-top:24px;display:flex;gap:12px;">
+                <button class="btn-primary" onclick="calcular()" style="flex:1">
+                    <i class="fa fa-calculator"></i>Calcular
+                </button>
+                <button class="btn-secondary" onclick="guardar()">
+                    <i class="fa fa-save"></i>Guardar
+                </button>
+            </div>
+
+            <div id="alertSuccess" class="alert-success" style="margin-top:12px">✅ Guardado en Supabase</div>
+            <div id="alertError" class="alert-error" style="margin-top:12px">❌ Error al guardar</div>
+        </div>
+
+        <div class="result-card">
+            <div class="result-label">Diámetro de Tubería</div>
+            <div class="result-big" id="diametro">—</div>
+            <div style="color:rgba(0,224,164,0.4);font-size:13px;margin-top:6px" id="material-tag">PVC</div>
+
+            <div class="mini-cards" style="margin-top:28px">
+                <div class="mini-card">
+                    <div class="mini-label">Bomba Sugerida</div>
+                    <div class="mini-val" id="bomba">—</div>
+                </div>
+                <div class="mini-card">
+                    <div class="mini-label">Cisterna Mín.</div>
+                    <div class="mini-val" id="cisterna">—</div>
+                </div>
+                <div class="mini-card">
+                    <div class="mini-label">Vel. Flujo</div>
+                    <div class="mini-val" id="velocidad">—</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Historial de Cálculos</h3>
+        <div class="hist-scroll" id="historial">
+            <div class="empty-state">Cargando historial...</div>
+        </div>
+    </div>
 </div>
 
-<div class="card">
-    <h2>Resultado</h2>
-    <div class="big" id="diametro">-</div>
-    <p>Bomba: <span id="bomba"></span></p>
-    <p>Cisterna: <span id="cisterna"></span></p>
-</div>
-
-<div class="card">
-    <h2>Historial</h2>
-    <div id="historial"></div>
-</div>
-
+<script src="config.js"></script>
+<script src="sidebar.js"></script>
 <script>
+document.getElementById('sidebar-container').innerHTML = renderSidebar('hidraulico');
 
-// 🔐 PROTECCIÓN
-if(localStorage.getItem("login")!=="true"){
-    window.location="login.html";
+let ultimoCalculo = null;
+
+function calcular() {
+    const gasto = parseFloat(document.getElementById('gasto').value);
+    const longitud = parseFloat(document.getElementById('longitud').value);
+    const C = parseFloat(document.getElementById('material').value);
+
+    if(!gasto || gasto <= 0) return;
+
+    const Q = gasto / 60; // LPS
+    const S = 0.02; // pendiente hidráulica
+
+    // Hazen-Williams
+    let D_m = Math.pow(Q / (0.278 * C * Math.pow(S, 0.54)), 1/2.63);
+    const D_mm = D_m * 1000;
+
+    // Diámetros comerciales PVC
+    let diametro = '3/4"';
+    let diam_real = 19;
+    if(D_mm > 19) { diametro = '1"'; diam_real = 25; }
+    if(D_mm > 25) { diametro = '1 1/4"'; diam_real = 32; }
+    if(D_mm > 32) { diametro = '1 1/2"'; diam_real = 38; }
+    if(D_mm > 38) { diametro = '2"'; diam_real = 50; }
+    if(D_mm > 50) { diametro = '2 1/2"'; diam_real = 63; }
+    if(D_mm > 63) { diametro = '3"'; diam_real = 75; }
+
+    // Velocidad real
+    const area = Math.PI * Math.pow(diam_real/2000, 2);
+    const vel = (Q / 1000 / area).toFixed(2);
+
+    // Bomba (HP)
+    let bomba = '0.5 HP';
+    if(gasto > 60) bomba = '1.0 HP';
+    if(gasto > 100) bomba = '1.5 HP';
+    if(gasto > 150) bomba = '2.0 HP';
+    if(gasto > 200) bomba = '3.0 HP';
+
+    // Cisterna (almacenamiento 2 horas)
+    const cisterna = Math.ceil(gasto * 60 * 2 / 1000) + ',000 L';
+
+    document.getElementById('diametro').textContent = diametro;
+    document.getElementById('bomba').textContent = bomba;
+    document.getElementById('cisterna').textContent = cisterna;
+    document.getElementById('velocidad').textContent = vel + ' m/s';
+
+    const matLabel = { '150':'PVC', '130':'CPVC', '100':'Acero' };
+    document.getElementById('material-tag').textContent = matLabel[document.getElementById('material').value] || 'PVC';
+
+    ultimoCalculo = { gasto, longitud, diametro, bomba, cisterna };
 }
 
-// 💧 CALCULO REAL
-async function calcular(){
-
-    let gasto = parseFloat(document.getElementById("gasto").value);
-    let longitud = parseFloat(document.getElementById("longitud").value);
-
-    // 🔥 convertir LPM a L/s
-    let Q = gasto / 60;
-
-    let C = 150; // PVC
-    let S = 0.02; // pendiente típica
-
-    let D = Math.pow((Q/(0.278*C*Math.pow(S,0.54))),1/2.63);
-
-    let diametroMM = (D * 1000).toFixed(0);
-
-    // seleccionar diámetro comercial
-    let diametro = "1\"";
-    if(diametroMM > 25) diametro = "1 1/4\"";
-    if(diametroMM > 32) diametro = "1 1/2\"";
-
-    // bomba
-    let bomba = "0.5 HP";
-    if(gasto > 80) bomba = "1 HP";
-    if(gasto > 120) bomba = "2 HP";
-
-    // cisterna
-    let cisterna = (gasto * 60 * 2).toFixed(0) + " L";
-
-    // mostrar
-    document.getElementById("diametro").innerText = diametro;
-    document.getElementById("bomba").innerText = bomba;
-    document.getElementById("cisterna").innerText = cisterna;
-
-    // 💾 GUARDAR EN BD
-    await fetch("http://localhost:3000/hidraulico",{
-        method:"POST",
-        headers:{ "Content-Type":"application/json"},
-        body: JSON.stringify({
-            gasto,longitud,diametro,bomba,cisterna
-        })
-    });
-
-    cargarHistorial();
+async function guardar() {
+    if(!ultimoCalculo) calcular();
+    if(!ultimoCalculo) return;
+    try {
+        await sbFetch('calculos_hidraulicos', { method: 'POST', body: ultimoCalculo });
+        const s = document.getElementById('alertSuccess');
+        s.style.display = 'block';
+        setTimeout(()=>s.style.display='none', 3000);
+        cargarHistorial();
+    } catch(err) {
+        const e = document.getElementById('alertError');
+        e.style.display = 'block';
+        setTimeout(()=>e.style.display='none', 3000);
+    }
 }
 
-
-// 📥 HISTORIAL
-async function cargarHistorial(){
-    const res = await fetch("http://localhost:3000/hidraulico");
-    const data = await res.json();
-
-    let html = "";
-
-    data.forEach(h=>{
-        html += `
-        <div>
-            💧 ${h.gasto} LPM → ${h.diametro} | ${h.bomba}
-        </div>`;
-    });
-
-    document.getElementById("historial").innerHTML = html;
+async function cargarHistorial() {
+    try {
+        const data = await sbFetch('calculos_hidraulicos', { query: '?order=created_at.desc&limit=10' });
+        const div = document.getElementById('historial');
+        if(!data.length) { div.innerHTML = '<div class="empty-state">No hay cálculos guardados aún</div>'; return; }
+        div.innerHTML = data.map(c => `
+            <div class="hist-item">
+                💧 <strong>${c.gasto} LPM</strong> / ${c.longitud}m → ${c.diametro} | ${c.bomba} | ${c.cisterna}
+            </div>
+        `).join('');
+    } catch(err) {
+        document.getElementById('historial').innerHTML = '<div class="empty-state">Error al cargar historial</div>';
+    }
 }
 
+['gasto','longitud','material'].forEach(id => {
+    document.getElementById(id).addEventListener('change', calcular);
+    document.getElementById(id).addEventListener('input', calcular);
+});
+
+calcular();
 cargarHistorial();
-
 </script>
-
 </body>
 </html>

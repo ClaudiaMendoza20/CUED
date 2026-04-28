@@ -1,105 +1,155 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>Proyectos</title>
-
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CUED - Proyectos</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
-body{
-    background:#07121f;
-    color:white;
-    font-family:sans-serif;
-    padding:30px;
+.proj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;margin-top:8px;}
+.proj-card{
+    background:#0f1f38;border:1px solid rgba(255,255,255,0.06);
+    border-radius:16px;padding:24px;transition:all 0.2s;cursor:pointer;
 }
+.proj-card:hover{border-color:rgba(255,196,0,0.2);transform:translateY(-2px);}
+.proj-card h4{font-size:16px;font-weight:600;margin-bottom:6px;}
+.proj-card .desc{font-size:12px;color:rgba(255,255,255,0.4);margin-bottom:16px;min-height:18px;}
+.proj-card .cliente{font-size:11px;color:rgba(255,255,255,0.3);margin-bottom:12px;}
+.progress-row{display:flex;align-items:center;gap:10px;}
+.progress-bar{flex:1;height:4px;background:rgba(255,255,255,0.08);border-radius:99px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#00d4ff,#0080ff);}
+.progress-pct{font-size:12px;color:rgba(255,255,255,0.4);}
+.badge{display:inline-block;padding:3px 10px;border-radius:99px;font-size:10px;font-weight:600;letter-spacing:0.5px;margin-bottom:12px;}
+.badge-activo{background:rgba(0,255,153,0.1);color:#00ff99;}
+.badge-pausado{background:rgba(255,196,0,0.1);color:#ffc400;}
+.badge-terminado{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.4);}
 
-.box{
-    background:#0f2238;
-    padding:20px;
-    border-radius:15px;
-    margin-bottom:20px;
-}
-
-input,button{
-    width:100%;
-    margin:10px 0;
-    padding:10px;
-    border:none;
-    border-radius:8px;
-}
-
-button{
-    background:#1c3d5a;
-    color:white;
-    cursor:pointer;
-}
-
-.item{
-    background:#12263a;
-    padding:10px;
-    border-radius:8px;
-    margin:5px 0;
-}
+/* Modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:100;}
+.modal-bg.open{display:flex;}
+.modal{background:#0f1f38;border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:36px;width:460px;animation:fadeUp 0.3s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.modal h3{font-size:20px;font-family:'Rajdhani',sans-serif;margin-bottom:24px;}
+.modal-footer{display:flex;gap:12px;margin-top:24px;}
 </style>
 </head>
-
 <body>
+<div id="sidebar-container"></div>
 
-<h1>📁 Proyectos</h1>
+<div class="main">
+    <div class="page-header">
+        <div class="page-title">
+            <h1>Gestión de Proyectos</h1>
+            <p>Administra el historial de cálculos y reportes por proyecto.</p>
+        </div>
+        <button class="btn-primary" onclick="abrirModal()"><i class="fa fa-plus"></i>Nuevo Proyecto</button>
+    </div>
 
-<div class="box">
-    <h3>Agregar Proyecto</h3>
+    <div id="alertSuccess" class="alert-success">✅ Proyecto guardado correctamente</div>
+    <div id="alertError" class="alert-error">❌ Error al guardar el proyecto</div>
 
-    <input id="nombre" placeholder="Nombre del proyecto">
-    <input id="descripcion" placeholder="Descripción">
-
-    <button onclick="guardar()">Guardar</button>
+    <div id="projGrid" class="proj-grid">
+        <div class="empty-state" style="grid-column:1/-1">Cargando proyectos...</div>
+    </div>
 </div>
 
-<div class="box">
-    <h3>Lista de Proyectos</h3>
-    <div id="lista"></div>
+<!-- Modal Nuevo Proyecto -->
+<div class="modal-bg" id="modal">
+    <div class="modal">
+        <h3>Nuevo Proyecto</h3>
+        <label>Nombre del Proyecto</label>
+        <input id="mNombre" placeholder="Ej: Torre Corporativa Delta">
+        <label>Cliente / Empresa</label>
+        <input id="mCliente" placeholder="Ej: Grupo Inmobiliario SA">
+        <label>Área / Especialidad</label>
+        <select id="mArea">
+            <option value="Eléctrico">Eléctrico</option>
+            <option value="Hidráulico">Hidráulico</option>
+            <option value="HVAC">HVAC</option>
+            <option value="Incendios">Contra Incendios</option>
+            <option value="Gas">Gas / Aire</option>
+            <option value="Eléctrico / HVAC">Eléctrico + HVAC</option>
+            <option value="Multi-disciplina">Multi-disciplina</option>
+        </select>
+        <label>Descripción</label>
+        <input id="mDesc" placeholder="Breve descripción del proyecto">
+        <div class="modal-footer">
+            <button class="btn-primary" onclick="guardarProyecto()"><i class="fa fa-save"></i>Guardar</button>
+            <button class="btn-secondary" onclick="cerrarModal()">Cancelar</button>
+        </div>
+    </div>
 </div>
 
+<script src="config.js"></script>
+<script src="sidebar.js"></script>
 <script>
-// 🔐 PROTEGER
-if(localStorage.getItem("login")!=="true"){
-    window.location="login.html";
+document.getElementById('sidebar-container').innerHTML = renderSidebar('proyectos');
+
+async function cargarProyectos() {
+    try {
+        const data = await sbFetch('proyectos', { query: '?order=created_at.desc' });
+        const grid = document.getElementById('projGrid');
+        if(!data.length) {
+            grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1">No hay proyectos aún.<br><br><button class="btn-primary" onclick="abrirModal()"><i class="fa fa-plus"></i> Crear primer proyecto</button></div>';
+            return;
+        }
+        grid.innerHTML = data.map(p => `
+            <div class="proj-card">
+                <span class="badge badge-${p.status||'activo'}">${p.status||'activo'}</span>
+                <h4>${p.nombre}</h4>
+                <div class="desc">${p.descripcion||''}</div>
+                <div class="cliente"><i class="fa fa-building" style="margin-right:6px;color:rgba(255,255,255,0.2)"></i>${p.cliente||'Sin cliente'}</div>
+                <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-bottom:10px">
+                    <i class="fa fa-tag" style="margin-right:5px;color:rgba(255,196,0,0.4)"></i>${p.area||'General'}
+                </div>
+                <div class="progress-row">
+                    <div class="progress-bar"><div class="progress-fill" style="width:${p.progreso||0}%"></div></div>
+                    <span class="progress-pct">${p.progreso||0}%</span>
+                </div>
+            </div>
+        `).join('');
+    } catch(err) {
+        document.getElementById('projGrid').innerHTML = '<div class="empty-state" style="grid-column:1/-1">Error al cargar proyectos</div>';
+    }
 }
 
-// ➕ GUARDAR
-async function guardar(){
-    const nombre = document.getElementById("nombre").value;
-    const descripcion = document.getElementById("descripcion").value;
+function abrirModal() { document.getElementById('modal').classList.add('open'); }
+function cerrarModal() { document.getElementById('modal').classList.remove('open'); }
 
-    await fetch("http://localhost:3000/proyectos",{
-        method:"POST",
-        headers:{ "Content-Type":"application/json"},
-        body: JSON.stringify({nombre,descripcion})
-    });
-
-    cargar();
+async function guardarProyecto() {
+    const nombre = document.getElementById('mNombre').value.trim();
+    if(!nombre) { alert('El nombre es requerido'); return; }
+    try {
+        await sbFetch('proyectos', {
+            method: 'POST',
+            body: {
+                nombre,
+                cliente: document.getElementById('mCliente').value,
+                area: document.getElementById('mArea').value,
+                descripcion: document.getElementById('mDesc').value,
+                status: 'activo',
+                progreso: 0
+            }
+        });
+        cerrarModal();
+        const s = document.getElementById('alertSuccess');
+        s.style.display='block';
+        setTimeout(()=>s.style.display='none', 3000);
+        cargarProyectos();
+        // limpiar
+        ['mNombre','mCliente','mDesc'].forEach(id=>document.getElementById(id).value='');
+    } catch(err) {
+        const e = document.getElementById('alertError');
+        e.style.display='block';
+        setTimeout(()=>e.style.display='none', 3000);
+    }
 }
 
-// 📥 CARGAR
-async function cargar(){
-    const res = await fetch("http://localhost:3000/proyectos");
-    const data = await res.json();
+document.getElementById('modal').addEventListener('click', e => {
+    if(e.target === document.getElementById('modal')) cerrarModal();
+});
 
-    let html = "";
-    data.forEach(p=>{
-        html += `
-        <div class="item">
-            <b>${p.nombre}</b><br>
-            ${p.descripcion}
-        </div>`;
-    });
-
-    document.getElementById("lista").innerHTML = html;
-}
-
-// 🚀 INICIO
-cargar();
+cargarProyectos();
 </script>
-
 </body>
 </html>

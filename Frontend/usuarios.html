@@ -1,28 +1,182 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>Usuarios</title>
-
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CUED - Usuarios</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
-body{background:#07121f;color:white;font-family:sans-serif;padding:30px;}
-.box{background:#0f2238;padding:20px;border-radius:15px;}
+.users-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;}
+.user-card{background:#0f1f38;border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:24px;display:flex;align-items:center;gap:16px;}
+.u-avatar{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;flex-shrink:0;}
+.u-avatar.admin{background:rgba(255,196,0,0.15);color:#ffc400;}
+.u-avatar.tecnico{background:rgba(0,212,255,0.12);color:#00d4ff;}
+.u-avatar.viewer{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.4);}
+.u-name{font-size:15px;font-weight:600;}
+.u-role{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;margin-top:3px;}
+.u-role.admin{color:#ffc400;}
+.u-role.tecnico{color:#00d4ff;}
+.u-role.viewer{color:rgba(255,255,255,0.3);}
+.u-username{font-size:11px;color:rgba(255,255,255,0.3);margin-top:2px;}
+
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:100;}
+.modal-bg.open{display:flex;}
+.modal{background:#0f1f38;border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:36px;width:420px;}
+.modal h3{font-size:20px;font-family:'Rajdhani',sans-serif;margin-bottom:24px;}
+.modal-footer{display:flex;gap:12px;margin-top:24px;}
+.warning-note{background:rgba(255,196,0,0.06);border:1px solid rgba(255,196,0,0.15);border-radius:10px;padding:12px;font-size:12px;color:rgba(255,196,0,0.7);margin-top:16px;line-height:1.6;}
 </style>
 </head>
-
 <body>
+<div id="sidebar-container"></div>
 
-<h1>👥 Usuarios</h1>
+<div class="main">
+    <div class="page-header">
+        <div class="page-title">
+            <h1>👥 Gestión de Usuarios</h1>
+            <p>Administra los accesos y roles del personal técnico.</p>
+        </div>
+        <button class="btn-primary" onclick="abrirModal()"><i class="fa fa-plus"></i>Nuevo Usuario</button>
+    </div>
 
-<div class="box">
-    <p>Administración de usuarios</p>
+    <div id="alertSuccess" class="alert-success">✅ Usuario creado. Recuerda que la contraseña debe hashearse con bcrypt en el backend.</div>
+    <div id="alertError" class="alert-error">❌ Error al crear usuario</div>
+
+    <div class="warning-note">
+        ⚠️ <strong>Nota de seguridad:</strong> Para crear usuarios con contraseña segura, el backend debe estar corriendo 
+        (<code>node server.js</code>) y hashear la contraseña con bcrypt. En modo demo, se guarda sin hash.
+    </div>
+
+    <div style="margin-top:24px" id="usersGrid">
+        <div class="empty-state">Cargando usuarios...</div>
+    </div>
 </div>
 
-<script>
-if(localStorage.getItem("login")!=="true"){
-    window.location="login.html";
-}
-</script>
+<!-- Modal Nuevo Usuario -->
+<div class="modal-bg" id="modal">
+    <div class="modal">
+        <h3>Nuevo Usuario</h3>
 
+        <label>Nombre Completo</label>
+        <input id="mNombre" placeholder="Ej: Carlos Mendoza">
+
+        <label>Usuario (login)</label>
+        <input id="mUsername" placeholder="Ej: cmendoza">
+
+        <label>Contraseña</label>
+        <input id="mPassword" type="password" placeholder="Mínimo 6 caracteres">
+
+        <label>Rol</label>
+        <select id="mRol">
+            <option value="tecnico">Técnico — Puede calcular y guardar</option>
+            <option value="admin">Administrador — Acceso total</option>
+            <option value="viewer">Visor — Solo lectura</option>
+        </select>
+
+        <div class="modal-footer">
+            <button class="btn-primary" onclick="crearUsuario()"><i class="fa fa-user-plus"></i>Crear</button>
+            <button class="btn-secondary" onclick="cerrarModal()">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<script src="config.js"></script>
+<script src="sidebar.js"></script>
+<script>
+document.getElementById('sidebar-container').innerHTML = renderSidebar('usuarios');
+
+async function cargarUsuarios() {
+    try {
+        const data = await sbFetch('usuarios', { query: '?select=id,username,nombre,rol,created_at&order=created_at.asc' });
+        const div = document.getElementById('usersGrid');
+
+        if(!data.length) {
+            div.innerHTML = '<div class="empty-state">No hay usuarios registrados</div>';
+            return;
+        }
+
+        div.innerHTML = `<div class="users-grid">${data.map(u => {
+            const initial = (u.nombre || u.username || 'U')[0].toUpperCase();
+            const rol = u.rol || 'tecnico';
+            return `
+            <div class="user-card">
+                <div class="u-avatar ${rol}">${initial}</div>
+                <div>
+                    <div class="u-name">${u.nombre || '—'}</div>
+                    <div class="u-role ${rol}">${rol.toUpperCase()}</div>
+                    <div class="u-username">@${u.username}</div>
+                </div>
+            </div>`;
+        }).join('')}</div>`;
+
+    } catch(err) {
+        document.getElementById('usersGrid').innerHTML = '<div class="empty-state">Error al cargar usuarios</div>';
+    }
+}
+
+function abrirModal() { document.getElementById('modal').classList.add('open'); }
+function cerrarModal() { document.getElementById('modal').classList.remove('open'); }
+
+async function crearUsuario() {
+    const nombre = document.getElementById('mNombre').value.trim();
+    const username = document.getElementById('mUsername').value.trim();
+    const password = document.getElementById('mPassword').value;
+    const rol = document.getElementById('mRol').value;
+
+    if(!nombre || !username || !password) { alert('Completa todos los campos'); return; }
+    if(password.length < 6) { alert('La contraseña debe tener al menos 6 caracteres'); return; }
+
+    try {
+        // Intentar hashear via backend primero
+        let hashedPassword = password; // fallback sin hash (solo desarrollo)
+
+        try {
+            const res = await fetch('http://localhost:3000/crear-usuario', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombre, username, password, rol }),
+                signal: AbortSignal.timeout(3000)
+            });
+            const data = await res.json();
+            if(data.success) {
+                cerrarModal();
+                cargarUsuarios();
+                const s = document.getElementById('alertSuccess');
+                s.textContent = '✅ Usuario creado correctamente via backend.';
+                s.style.display = 'block';
+                setTimeout(()=>s.style.display='none', 4000);
+                return;
+            }
+        } catch(backendErr) {
+            console.warn('Backend no disponible, guardando sin hash (solo desarrollo)');
+        }
+
+        // Fallback: guardar directo (solo para desarrollo)
+        await sbFetch('usuarios', {
+            method: 'POST',
+            body: { nombre, username, password: hashedPassword, rol }
+        });
+
+        cerrarModal();
+        cargarUsuarios();
+        const s = document.getElementById('alertSuccess');
+        s.style.display = 'block';
+        setTimeout(()=>s.style.display='none', 5000);
+        ['mNombre','mUsername','mPassword'].forEach(id=>document.getElementById(id).value='');
+
+    } catch(err) {
+        console.error(err);
+        const e = document.getElementById('alertError');
+        e.style.display = 'block';
+        setTimeout(()=>e.style.display='none', 4000);
+    }
+}
+
+document.getElementById('modal').addEventListener('click', e => {
+    if(e.target === document.getElementById('modal')) cerrarModal();
+});
+
+cargarUsuarios();
+</script>
 </body>
 </html>

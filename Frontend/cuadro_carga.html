@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CUED - Cuadros de Carga</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+.cuadro-table{width:100%;border-collapse:collapse;}
+.cuadro-table th{background:rgba(255,255,255,0.03);padding:12px 16px;text-align:left;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.3);}
+.cuadro-table td{padding:8px 16px;border-bottom:1px solid rgba(255,255,255,0.04);}
+.cuadro-table input{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:8px 12px;color:white;width:100%;font-size:13px;}
+.cuadro-table input:focus{border-color:rgba(255,196,0,0.4);outline:none;}
+.total-row{background:rgba(255,196,0,0.05);border-top:2px solid rgba(255,196,0,0.2);}
+.total-row td{font-weight:600;color:#ffc400;padding:14px 16px;}
+.carga-total-cell{color:#ffc400;font-weight:600;font-size:14px;}
+.btn-add{background:rgba(255,255,255,0.04);border:1px dashed rgba(255,255,255,0.15);border-radius:10px;padding:12px;width:100%;color:rgba(255,255,255,0.4);cursor:pointer;font-size:13px;transition:all 0.2s;margin-top:12px;}
+.btn-add:hover{background:rgba(255,196,0,0.06);border-color:rgba(255,196,0,0.3);color:#ffc400;}
+.btn-del{background:rgba(255,60,60,0.08);border:1px solid rgba(255,60,60,0.15);border-radius:6px;padding:5px 10px;color:#ff6b6b;cursor:pointer;font-size:12px;}
+.btn-del:hover{background:rgba(255,60,60,0.2);}
+.summary-row{display:flex;gap:20px;margin-bottom:24px;}
+.sum-card{flex:1;background:#0f1f38;border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:20px;text-align:center;}
+.sum-val{font-family:'Rajdhani',sans-serif;font-size:32px;font-weight:700;}
+.sum-label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-top:4px;}
+</style>
+</head>
+<body>
+<div id="sidebar-container"></div>
+
+<div class="main">
+    <div class="page-header">
+        <div class="page-title">
+            <h1>⚡ Generador de Cuadros</h1>
+            <p>Sustituye hojas de cálculo con tablas dinámicas integradas.</p>
+        </div>
+        <div style="display:flex;gap:12px">
+            <button class="btn-secondary" onclick="guardarTodo()"><i class="fa fa-save"></i>Guardar Todo</button>
+            <button class="btn-primary" onclick="agregarFila()"><i class="fa fa-plus"></i>Agregar Fila</button>
+        </div>
+    </div>
+
+    <div id="alertSuccess" class="alert-success">✅ Cuadro guardado en Supabase</div>
+    <div id="alertError" class="alert-error">❌ Error al guardar</div>
+
+    <div class="summary-row" id="summaryRow">
+        <div class="sum-card">
+            <div class="sum-val" id="sumTotal" style="color:#ffc400">0</div>
+            <div class="sum-label">Carga Total Instalada (kW)</div>
+        </div>
+        <div class="sum-card">
+            <div class="sum-val" id="sumDemanda" style="color:#00d4ff">0</div>
+            <div class="sum-label">Demanda Total (kW)</div>
+        </div>
+        <div class="sum-card">
+            <div class="sum-val" id="sumCircuitos" style="color:#00ff99">0</div>
+            <div class="sum-label">Circuitos</div>
+        </div>
+    </div>
+
+    <div class="card" style="padding:0;overflow:hidden">
+        <table class="cuadro-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Descripción del Elemento</th>
+                    <th>Carga (kW)</th>
+                    <th>Factor de Demanda</th>
+                    <th>Carga Total</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="cuadroBody">
+                <!-- filas dinámicas -->
+            </tbody>
+        </table>
+        <div style="padding:12px 16px">
+            <button class="btn-add" onclick="agregarFila()">
+                <i class="fa fa-plus"></i> Agregar concepto
+            </button>
+        </div>
+    </div>
+</div>
+
+<script src="config.js"></script>
+<script src="sidebar.js"></script>
+<script>
+document.getElementById('sidebar-container').innerHTML = renderSidebar('cuadros');
+
+let filas = [];
+let nextId = 1;
+
+function agregarFila(desc='', carga=0, factor=1.25) {
+    const id = nextId++;
+    filas.push({ id, desc, carga, factor });
+    renderTabla();
+}
+
+function eliminarFila(id) {
+    filas = filas.filter(f => f.id !== id);
+    renderTabla();
+}
+
+function renderTabla() {
+    const tbody = document.getElementById('cuadroBody');
+    let totalInstalado = 0;
+    let totalDemanda = 0;
+
+    tbody.innerHTML = filas.map((f, i) => {
+        const sub = (parseFloat(f.carga) || 0) * (parseFloat(f.factor) || 1.25);
+        totalInstalado += parseFloat(f.carga) || 0;
+        totalDemanda += sub;
+        return `
+        <tr>
+            <td style="color:rgba(255,255,255,0.3);width:40px">${i+1}</td>
+            <td><input value="${f.desc}" placeholder="Descripción..." onchange="filas[${i}].desc=this.value"></td>
+            <td style="width:130px"><input type="number" value="${f.carga}" step="0.1" onchange="filas[${i}].carga=this.value;renderTabla()" oninput="filas[${i}].carga=this.value;renderTabla()"></td>
+            <td style="width:150px">
+                <select onchange="filas[${i}].factor=this.value;renderTabla()" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:8px 12px;color:white;width:100%;font-size:13px">
+                    <option value="1.0" ${f.factor==1.0?'selected':''}>1.00</option>
+                    <option value="1.25" ${f.factor==1.25?'selected':''}>1.25</option>
+                    <option value="1.5" ${f.factor==1.5?'selected':''}>1.50</option>
+                    <option value="0.8" ${f.factor==0.8?'selected':''}>0.80</option>
+                </select>
+            </td>
+            <td class="carga-total-cell" style="width:120px">${sub.toFixed(2)} kW</td>
+            <td style="width:50px"><button class="btn-del" onclick="eliminarFila(${f.id})"><i class="fa fa-trash"></i></button></td>
+        </tr>`;
+    }).join('');
+
+    document.getElementById('sumTotal').textContent = totalInstalado.toFixed(2);
+    document.getElementById('sumDemanda').textContent = totalDemanda.toFixed(2);
+    document.getElementById('sumCircuitos').textContent = filas.length;
+}
+
+async function guardarTodo() {
+    if(!filas.length) { alert('Agrega al menos un elemento'); return; }
+    try {
+        for(const f of filas) {
+            const carga = parseFloat(f.carga) || 0;
+            const factor = parseFloat(f.factor) || 1.25;
+            await sbFetch('cuadros_carga', {
+                method: 'POST',
+                body: { descripcion: f.desc || 'Sin descripción', carga_kw: carga, factor_demanda: factor }
+            });
+        }
+        const s = document.getElementById('alertSuccess');
+        s.style.display = 'block';
+        setTimeout(()=>s.style.display='none', 3000);
+    } catch(err) {
+        const e = document.getElementById('alertError');
+        e.style.display = 'block';
+        setTimeout(()=>e.style.display='none', 3000);
+    }
+}
+
+async function cargarGuardados() {
+    try {
+        const data = await sbFetch('cuadros_carga', { query: '?order=created_at.desc&limit=20' });
+        if(data.length) {
+            data.forEach(d => agregarFila(d.descripcion, d.carga_kw, d.factor_demanda));
+        } else {
+            // Filas de ejemplo
+            agregarFila('Tablero Principal TP-01', 120, 1.25);
+            agregarFila('Subtablero ST-01', 60, 1.25);
+        }
+    } catch(err) {
+        agregarFila('Tablero Principal TP-01', 120, 1.25);
+        agregarFila('Subtablero ST-01', 60, 1.25);
+    }
+}
+
+cargarGuardados();
+</script>
+</body>
+</html>

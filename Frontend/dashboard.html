@@ -2,327 +2,262 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>CUED Dashboard</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CUED Solutions - Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
 <style>
-
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:Segoe UI;
-}
-
-body{
-display:flex;
-background:#07121f;
-color:white;
-}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{display:flex;background:#060e1a;color:white;font-family:'Inter',sans-serif;min-height:100vh;}
 
 /* SIDEBAR */
-
 .sidebar{
-width:240px;
-height:100vh;
-background:#0f2238;
-padding:20px;
-display:flex;
-flex-direction:column;
-justify-content:space-between;
+    width:230px;min-height:100vh;background:#0a1628;
+    display:flex;flex-direction:column;justify-content:space-between;
+    border-right:1px solid rgba(255,255,255,0.05);flex-shrink:0;
 }
-
-.logo{
-font-size:20px;
-font-weight:bold;
-margin-bottom:20px;
-}
-
+.sidebar-top{padding:28px 20px;}
+.logo{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;letter-spacing:1px;margin-bottom:32px;}
 .logo span{color:#ffc400;}
-
 .menu a{
-display:block;
-padding:12px;
-margin:6px 0;
-color:#cfd8dc;
-text-decoration:none;
-border-radius:8px;
+    display:flex;align-items:center;gap:12px;padding:11px 14px;margin:2px 0;
+    color:rgba(255,255,255,0.5);text-decoration:none;border-radius:10px;font-size:13.5px;
+    transition:all 0.2s;
 }
+.menu a:hover{color:white;background:rgba(255,255,255,0.05);}
+.menu a.active{color:#ffc400;background:rgba(255,196,0,0.08);border-left:3px solid #ffc400;padding-left:11px;}
+.menu a i{width:18px;text-align:center;font-size:14px;}
 
-.menu a:hover{
-background:#12263a;
-}
-
-.active{
-background:#12263a;
-color:#ffc400 !important;
-}
+.sidebar-bottom{padding:20px;}
+.user-info{display:flex;align-items:center;gap:10px;padding:12px;background:rgba(255,255,255,0.03);border-radius:10px;margin-bottom:12px;}
+.user-avatar{width:34px;height:34px;background:#ffc400;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#060e1a;font-weight:700;font-size:14px;font-family:'Rajdhani',sans-serif;}
+.user-name{font-size:13px;font-weight:500;}
+.user-role{font-size:10px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:1px;}
+.btn-logout{width:100%;padding:10px;background:rgba(255,60,60,0.1);border:1px solid rgba(255,60,60,0.2);border-radius:10px;color:#ff6b6b;font-size:13px;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px;}
+.btn-logout:hover{background:rgba(255,60,60,0.2);}
 
 /* MAIN */
+.main{flex:1;padding:36px 40px;overflow-y:auto;}
+.page-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;}
+.page-title h1{font-family:'Rajdhani',sans-serif;font-size:32px;font-weight:700;letter-spacing:0.5px;}
+.page-title p{color:rgba(255,255,255,0.4);font-size:13px;margin-top:4px;}
 
-.main{
-flex:1;
-padding:40px;
+/* KPI CARDS */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-bottom:28px;}
+.kpi-card{
+    background:#0f1f38;border:1px solid rgba(255,255,255,0.06);
+    border-radius:16px;padding:24px;position:relative;overflow:hidden;
 }
-
-.header{
-display:flex;
-justify-content:space-between;
-margin-bottom:30px;
+.kpi-card::before{
+    content:'';position:absolute;top:0;right:0;width:80px;height:80px;
+    border-radius:50%;opacity:0.08;transform:translate(20px,-20px);
 }
-
-.cards{
-display:grid;
-grid-template-columns:repeat(4,1fr);
-gap:20px;
-margin-bottom:30px;
-}
-
-.card{
-background:#0b2540;
-padding:25px;
-border-radius:20px;
-}
-
-.card h1{
-font-size:35px;
-margin-top:10px;
-}
-
-.card p{
-color:#8aa0b8;
-}
+.kpi-card:nth-child(1)::before{background:#ffc400;}
+.kpi-card:nth-child(2)::before{background:#00d4ff;}
+.kpi-card:nth-child(3)::before{background:#00ff99;}
+.kpi-card:nth-child(4)::before{background:#ff6b6b;}
+.kpi-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;margin-bottom:14px;}
+.kpi-card:nth-child(1) .kpi-icon{background:rgba(255,196,0,0.12);color:#ffc400;}
+.kpi-card:nth-child(2) .kpi-icon{background:rgba(0,212,255,0.12);color:#00d4ff;}
+.kpi-card:nth-child(3) .kpi-icon{background:rgba(0,255,153,0.12);color:#00ff99;}
+.kpi-card:nth-child(4) .kpi-icon{background:rgba(255,107,107,0.12);color:#ff6b6b;}
+.kpi-num{font-family:'Rajdhani',sans-serif;font-size:36px;font-weight:700;line-height:1;}
+.kpi-label{font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,0.35);margin-top:6px;}
 
 /* CONTENT */
+.content-grid{display:grid;grid-template-columns:1fr 320px;gap:24px;}
 
-.content{
-display:grid;
-grid-template-columns:2fr 1fr;
-gap:20px;
+/* TABLE CARD */
+.card{background:#0f1f38;border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:24px;}
+.card h3{font-size:15px;font-weight:600;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;}
+.card h3 a{font-size:12px;color:#ffc400;text-decoration:none;opacity:0.8;}
+.card h3 a:hover{opacity:1;}
+
+table{width:100%;border-collapse:collapse;}
+th{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.3);padding:0 0 12px;text-align:left;border-bottom:1px solid rgba(255,255,255,0.06);}
+td{padding:14px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:13.5px;}
+tr:last-child td{border-bottom:none;}
+
+.progress-bar{height:4px;background:rgba(255,255,255,0.08);border-radius:99px;width:100px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#00d4ff,#0080ff);}
+
+.badge{display:inline-block;padding:3px 10px;border-radius:99px;font-size:10px;font-weight:600;letter-spacing:0.5px;}
+.badge-activo{background:rgba(0,255,153,0.1);color:#00ff99;}
+.badge-pausado{background:rgba(255,196,0,0.1);color:#ffc400;}
+.badge-terminado{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.4);}
+
+/* QUICK ACCESS */
+.quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px;}
+.quick-btn{
+    background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);
+    border-radius:12px;padding:18px;cursor:pointer;transition:all 0.2s;
+    display:flex;flex-direction:column;align-items:center;gap:8px;
+    color:white;text-decoration:none;
 }
+.quick-btn:hover{background:rgba(255,196,0,0.06);border-color:rgba(255,196,0,0.2);}
+.quick-btn .icon{font-size:22px;}
+.quick-btn span{font-size:11px;color:rgba(255,255,255,0.5);text-align:center;}
 
-/* TABLE */
-
-.table{
-background:#0b2540;
-padding:25px;
-border-radius:20px;
-}
-
-table{
-width:100%;
-margin-top:20px;
-border-collapse:collapse;
-}
-
-th{
-text-align:left;
-color:#8aa0b8;
-font-size:13px;
-}
-
-td{
-padding:12px 0;
-border-bottom:1px solid #1e3a5f;
-}
-
-/* QUICK */
-
-.quick{
-background:#0b2540;
-padding:25px;
-border-radius:20px;
-}
-
-.quick-grid{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:15px;
-margin-top:20px;
-}
-
-.quick button{
-
-background:#07121f;
-border:none;
-padding:20px;
-border-radius:12px;
-color:white;
-cursor:pointer;
-
-}
-
-.quick button:hover{
-background:#12263a;
-}
-
+.empty-state{text-align:center;padding:40px;color:rgba(255,255,255,0.2);font-size:13px;}
 </style>
 </head>
-
 <body>
 
 <div class="sidebar">
-
-<div>
-
-<div class="logo"><span>CUED</span> Solutions</div>
-
-<div class="menu">
-
-<a class="active">Dashboard</a>
-<a href="proyectos.html">Proyectos</a>
-<a href="electrico.html">Eléctrico</a>
-<a href="hidraulico.html">Hidráulico</a>
-<a href="gas.html">Gas / Aire</a>
-<a href="hvac.html">HVAC</a>
-<a href="contra_incendios.html">Contra Incendios</a>
-<a href="cuadro_carga.html">Cuadros de Carga</a>
-<a href="cotizacion.html">Cotizaciones</a>
-<a href="usuarios.html">Usuarios</a>
-
-</div>
-
-</div>
-
+    <div class="sidebar-top">
+        <div class="logo"><span>CUED</span> Solutions</div>
+        <div class="menu">
+            <a href="dashboard.html" class="active"><i class="fa fa-chart-line"></i>Dashboard</a>
+            <a href="proyectos.html"><i class="fa fa-folder"></i>Proyectos</a>
+            <a href="electrico.html"><i class="fa fa-bolt"></i>Eléctrico</a>
+            <a href="hidraulico.html"><i class="fa fa-droplet"></i>Hidráulico</a>
+            <a href="gas.html"><i class="fa fa-wind"></i>Gas / Aire</a>
+            <a href="hvac.html"><i class="fa fa-fan"></i>HVAC</a>
+            <a href="incendios.html"><i class="fa fa-fire"></i>Contra Incendios</a>
+            <a href="cuadro_carga.html"><i class="fa fa-table"></i>Cuadros de Carga</a>
+            <a href="cotizacion.html"><i class="fa fa-file-invoice-dollar"></i>Cotizaciones</a>
+            <a href="usuarios.html"><i class="fa fa-users"></i>Usuarios</a>
+        </div>
+    </div>
+    <div class="sidebar-bottom">
+        <div class="user-info">
+            <div class="user-avatar" id="avatarLetter">A</div>
+            <div>
+                <div class="user-name" id="userName">Admin</div>
+                <div class="user-role" id="userRole">ADMIN</div>
+            </div>
+        </div>
+        <button class="btn-logout" onclick="logout()"><i class="fa fa-arrow-right-from-bracket"></i>Salir</button>
+    </div>
 </div>
 
 <div class="main">
+    <div class="page-header">
+        <div class="page-title">
+            <h1>Resumen Operativo</h1>
+            <p>Panel de control de ingeniería CUED Solutions</p>
+        </div>
+    </div>
 
-<div class="header">
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-icon"><i class="fa fa-folder"></i></div>
+            <div class="kpi-num" id="kpiProyectos">—</div>
+            <div class="kpi-label">Proyectos</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon"><i class="fa fa-calculator"></i></div>
+            <div class="kpi-num" id="kpiCalculos">—</div>
+            <div class="kpi-label">Cálculos</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon"><i class="fa fa-file-invoice-dollar"></i></div>
+            <div class="kpi-num" id="kpiCotizaciones">—</div>
+            <div class="kpi-label">Cotizaciones</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon"><i class="fa fa-bell"></i></div>
+            <div class="kpi-num" id="kpiAlertas">0</div>
+            <div class="kpi-label">Alertas</div>
+        </div>
+    </div>
 
-<div>
-<h1>Resumen Operativo</h1>
-<p style="color:#8aa0b8">Panel de control de ingeniería CUED Solutions</p>
+    <div class="content-grid">
+        <div class="card">
+            <h3>Proyectos Recientes <a href="proyectos.html">Ver todos →</a></h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nombre del Proyecto</th>
+                        <th>Especialidad</th>
+                        <th>Progreso</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaProyectos">
+                    <tr><td colspan="4" class="empty-state">Cargando...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card">
+            <h3>Accesos Rápidos</h3>
+            <div class="quick-grid">
+                <a href="electrico.html" class="quick-btn">
+                    <span class="icon">⚡</span>
+                    <span>Cálculo Eléctrico</span>
+                </a>
+                <a href="incendios.html" class="quick-btn">
+                    <span class="icon">🔥</span>
+                    <span>Rociadores</span>
+                </a>
+                <a href="hvac.html" class="quick-btn">
+                    <span class="icon">❄️</span>
+                    <span>HVAC TON</span>
+                </a>
+                <a href="cotizacion.html" class="quick-btn">
+                    <span class="icon">➕</span>
+                    <span>Nueva Cotiz.</span>
+                </a>
+            </div>
+        </div>
+    </div>
 </div>
 
-</div>
-
-<!-- CARDS -->
-
-<div class="cards">
-
-<div class="card">
-<p>Proyectos</p>
-<h1 id="proyectos">0</h1>
-</div>
-
-<div class="card">
-<p>Cálculos</p>
-<h1 id="calculos">0</h1>
-</div>
-
-<div class="card">
-<p>Cotizaciones</p>
-<h1 id="cotizaciones">0</h1>
-</div>
-
-<div class="card">
-<p>Alertas</p>
-<h1 id="alertas">0</h1>
-</div>
-
-</div>
-
-<!-- CONTENT -->
-
-<div class="content">
-
-<div class="table">
-
-<h3>Proyectos Recientes</h3>
-
-<table>
-
-<thead>
-
-<tr>
-<th>Proyecto</th>
-<th>Especialidad</th>
-<th>Progreso</th>
-</tr>
-
-</thead>
-
-<tbody id="tablaProyectos">
-
-</tbody>
-
-</table>
-
-</div>
-
-<div class="quick">
-
-<h3>Accesos Rápidos</h3>
-
-<div class="quick-grid">
-
-<button onclick="window.location='electrico.html'">
-⚡ Cálculo Carga
-</button>
-
-<button onclick="window.location='contra_incendios.html'">
-🔥 Rociadores
-</button>
-
-<button onclick="window.location='hvac.html'">
-❄ HVAC TON
-</button>
-
-<button onclick="window.location='cotizacion.html'">
-➕ Nueva Cotiz.
-</button>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
+<script src="config.js"></script>
 <script>
-
-/* CARGAR DASHBOARD */
-
-async function cargarDashboard(){
-
-let res=await fetch("/api/dashboard")
-
-let data=await res.json()
-
-document.getElementById("proyectos").innerText=data.proyectos
-document.getElementById("calculos").innerText=data.calculos
-document.getElementById("cotizaciones").innerText=data.cotizaciones
-
-/* PROYECTOS RECIENTES */
-
-let tabla=document.getElementById("tablaProyectos")
-
-tabla.innerHTML=""
-
-data.recientes.forEach(p=>{
-
-tabla.innerHTML+=`
-
-<tr>
-
-<td>${p.nombre}</td>
-<td>${p.area}</td>
-<td>${p.progreso}%</td>
-
-</tr>
-
-`
-
-})
-
+const user = checkAuth();
+if(user) {
+    document.getElementById('userName').textContent = user.nombre || user.username;
+    document.getElementById('userRole').textContent = user.rol?.toUpperCase() || 'ADMIN';
+    document.getElementById('avatarLetter').textContent = (user.nombre || user.username || 'A')[0].toUpperCase();
 }
 
-cargarDashboard()
+async function cargarDashboard() {
+    try {
+        const [proyectos, calcE, calcH, calcHVAC, calcI, cotiz] = await Promise.all([
+            sbFetch('proyectos', { query: '?select=id,nombre,area,progreso,status&order=created_at.desc&limit=5' }),
+            sbFetch('calculos_electricos', { query: '?select=id' }),
+            sbFetch('calculos_hidraulicos', { query: '?select=id' }),
+            sbFetch('calculos_hvac', { query: '?select=id' }),
+            sbFetch('calculos_incendios', { query: '?select=id' }),
+            sbFetch('cotizaciones', { query: '?select=id' })
+        ]);
 
+        document.getElementById('kpiProyectos').textContent = proyectos.length;
+        document.getElementById('kpiCalculos').textContent = calcE.length + calcH.length + calcHVAC.length + calcI.length;
+        document.getElementById('kpiCotizaciones').textContent = cotiz.length;
+
+        const tbody = document.getElementById('tablaProyectos');
+        if(!proyectos.length) {
+            tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No hay proyectos aún. <a href="proyectos.html" style="color:#ffc400">Crear uno</a></td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = proyectos.map(p => `
+            <tr>
+                <td><strong>${p.nombre}</strong></td>
+                <td style="color:rgba(255,255,255,0.5)">${p.area || '—'}</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width:${p.progreso||0}%"></div>
+                    </div>
+                </td>
+                <td><span class="badge badge-${p.status||'activo'}">${p.status||'activo'}</span></td>
+            </tr>
+        `).join('');
+
+    } catch(err) {
+        console.error('Error cargando dashboard:', err);
+        document.getElementById('kpiProyectos').textContent = '0';
+        document.getElementById('kpiCalculos').textContent = '0';
+        document.getElementById('kpiCotizaciones').textContent = '0';
+        document.getElementById('tablaProyectos').innerHTML = '<tr><td colspan="4" class="empty-state">Error al cargar datos</td></tr>';
+    }
+}
+
+cargarDashboard();
 </script>
-
 </body>
 </html>

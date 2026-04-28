@@ -1,333 +1,304 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>Cálculos Eléctricos</title>
-
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CUED - Eléctrico</title>
+<link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
 <style>
-
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:Segoe UI;
+.calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+.result-card{
+    background:#0f1f38;
+    border:1px solid rgba(0,212,255,0.15);
+    border-radius:16px;
+    padding:28px;
+    text-align:center;
 }
-
-body{
-display:flex;
-background:#07121f;
-color:white;
+.result-big{
+    font-family:'Rajdhani',sans-serif;
+    font-size:72px;
+    font-weight:700;
+    color:#5fa8ff;
+    line-height:1;
 }
-
-/* SIDEBAR */
-
-.sidebar{
-width:240px;
-height:100vh;
-background:#0f2238;
-padding:20px;
-display:flex;
-flex-direction:column;
-justify-content:space-between;
-}
-
-.logo{
-font-size:20px;
-font-weight:bold;
-margin-bottom:20px;
-}
-
-.logo span{
-color:#ffc400;
-}
-
-.menu a{
-display:block;
-padding:12px;
-margin:6px 0;
-color:#cfd8dc;
-text-decoration:none;
-border-radius:8px;
-}
-
-.menu a:hover{
-background:#12263a;
-}
-
-.active{
-background:#12263a;
-color:#ffc400 !important;
-}
-
-/* MAIN */
-
-.main{
-flex:1;
-padding:40px;
-}
-
-.title{
-margin-bottom:30px;
-}
-
-.subtitle{
-color:#8aa0b8;
-margin-top:5px;
-}
-
-.grid{
-display:grid;
-grid-template-columns:420px 420px;
-gap:30px;
-}
-
-/* CARD */
-
-.card{
-background:#0b2540;
-padding:30px;
-border-radius:20px;
-}
-
-.card h3{
-margin-bottom:20px;
-}
-
-/* INPUT */
-
-label{
-display:block;
-margin-top:15px;
-color:#8aa0b8;
-font-size:13px;
-}
-
-input,select{
-width:100%;
-padding:12px;
-margin-top:5px;
-background:#07121f;
-border:none;
-border-radius:10px;
-color:white;
-}
-
-/* RESULT */
-
-.result{
-text-align:center;
-}
-
-.result h1{
-font-size:60px;
-color:#5fa8ff;
-margin:20px 0;
-}
-
-.boxes{
-display:flex;
-gap:20px;
-justify-content:center;
-margin-top:20px;
-}
-
-.box{
-background:#07121f;
-padding:20px;
-border-radius:10px;
-width:150px;
-}
-
-.box h3{
-margin-top:5px;
-}
-
-button{
-margin-top:20px;
-width:100%;
-padding:12px;
-border:none;
-border-radius:10px;
-background:#ffc400;
-font-weight:bold;
-cursor:pointer;
-}
-
+.result-unit{font-size:22px;color:rgba(95,168,255,0.6);}
+.hist-scroll{max-height:260px;overflow-y:auto;}
+.hist-scroll::-webkit-scrollbar{width:4px;}
+.hist-scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:99px;}
 </style>
 </head>
-
 <body>
-
-<div class="sidebar">
-
-<div>
-
-<div class="logo"><span>CUED</span> Solutions</div>
-
-<div class="menu">
-
-<a href="dashboard.html">Dashboard</a>
-<a href="proyectos.html">Proyectos</a>
-<a class="active">⚡ Eléctrico</a>
-<a href="hidraulico.html">Hidráulico</a>
-<a href="gas.html">Gas / Aire</a>
-<a href="hvac.html">HVAC</a>
-<a href="contra_incendios.html">Contra Incendios</a>
-<a href="cuadro_carga.html">Cuadros de Carga</a>
-<a href="cotizacion.html">Cotizaciones</a>
-<a href="usuarios.html">Usuarios</a>
-
-</div>
-
-</div>
-
-</div>
+<div id="sidebar-container"></div>
 
 <div class="main">
+    <div class="page-header">
+        <div class="page-title">
+            <h1>⚡ Cálculos Eléctricos</h1>
+            <p>Dimensionamiento de alimentadores y protecciones.</p>
+        </div>
+    </div>
 
-<div class="title">
+    <div class="calc-grid">
 
-<h1>⚡ Cálculos Eléctricos</h1>
-<div class="subtitle">Dimensionamiento de alimentadores y protecciones</div>
+        <!-- PARÁMETROS -->
+        <div class="card">
+            <h3>Parámetros de Diseño</h3>
+
+            <label>Carga Total (Watts)</label>
+            <input id="carga" type="number" value="5000" placeholder="Watts" min="1">
+
+            <label>Voltaje (V)</label>
+            <select id="voltaje">
+                <option value="127">127 V — Monofásico residencial</option>
+                <option value="220" selected>220 V</option>
+                <option value="440">440 V — Industrial trifásico</option>
+            </select>
+
+            <label>Tipo de Sistema</label>
+            <select id="fases">
+                <option value="1">Monofásico</option>
+                <option value="3">Trifásico</option>
+            </select>
+
+            <label>Factor de Demanda</label>
+            <select id="factor">
+                <option value="1.25" selected>1.25 — NOM estándar</option>
+                <option value="1.0">1.0 — Sin factor</option>
+                <option value="1.5">1.5 — Alta demanda</option>
+            </select>
+
+            <div style="margin-top:24px;display:flex;gap:12px;">
+                <button class="btn-primary" onclick="calcular()" style="flex:1">
+                    <i class="fa fa-calculator"></i> Calcular
+                </button>
+                <button class="btn-secondary" id="btnGuardar" onclick="guardar()">
+                    <i class="fa fa-save"></i> Guardar
+                </button>
+            </div>
+
+            <div id="alertSuccess" class="alert-success" style="margin-top:12px;display:none">
+                ✅ Guardado correctamente en Supabase
+            </div>
+            <div id="alertError" class="alert-error" style="margin-top:12px;display:none">
+                ❌ Error al guardar — revisa consola (F12)
+            </div>
+        </div>
+
+        <!-- RESULTADO -->
+        <div class="result-card">
+            <div class="result-label">Corriente de Diseño</div>
+            <div class="result-big" id="corriente">
+                —<span class="result-unit"> A</span>
+            </div>
+
+            <div class="mini-cards" style="margin-top:28px">
+                <div class="mini-card">
+                    <div class="mini-label">Calibre Sugerido</div>
+                    <div class="mini-val" id="awg">—</div>
+                </div>
+                <div class="mini-card">
+                    <div class="mini-label">Protección</div>
+                    <div class="mini-val" id="breaker">—</div>
+                </div>
+                <div class="mini-card">
+                    <div class="mini-label">Conduit</div>
+                    <div class="mini-val" id="conduit">—</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- HISTORIAL -->
+    <div class="card" style="margin-top:24px">
+        <h3>Historial de Cálculos</h3>
+        <div class="hist-scroll" id="historial">
+            <div class="empty-state">Cargando historial...</div>
+        </div>
+    </div>
 
 </div>
 
-<div class="grid">
-
-<!-- PARAMETROS -->
-
-<div class="card">
-
-<h3>Parámetros de Diseño</h3>
-
-<label>Carga total (Watts)</label>
-<input id="carga" value="5000">
-
-<label>Voltaje (V)</label>
-<select id="voltaje">
-<option value="127">127 V</option>
-<option value="220" selected>220 V</option>
-<option value="440">440 V</option>
-</select>
-
-<label>Fases</label>
-<select id="fases">
-<option value="1">Monofásico</option>
-<option value="3">Trifásico</option>
-</select>
-
-<button onclick="calcular()">Calcular</button>
-
-</div>
-
-<!-- RESULTADO -->
-
-<div class="card result">
-
-<p>Corriente de diseño</p>
-
-<h1 id="corriente">0 A</h1>
-
-<div class="boxes">
-
-<div class="box">
-<p>Calibre sugerido</p>
-<h3 id="awg">-</h3>
-</div>
-
-<div class="box">
-<p>Protección</p>
-<h3 id="breaker">-</h3>
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
+<script src="config.js"></script>
+<script src="sidebar.js"></script>
 <script>
 
-function calcular(){
+// Sidebar
+document.getElementById('sidebar-container').innerHTML = renderSidebar('electrico');
 
-let carga=parseFloat(document.getElementById("carga").value)
-let voltaje=parseFloat(document.getElementById("voltaje").value)
-let fases=parseInt(document.getElementById("fases").value)
+// Keys de Supabase directas para evitar cualquier problema con config.js
+const SB_URL = 'https://tazheiutbleaexmcsopy.supabase.co/rest/v1';
+const SB_KEY = 'sb_publishable_i5hoZ9cKYlksVhpMcee_-Q_LQes-FOK';
+const SB_HEADERS = {
+    'Content-Type':  'application/json',
+    'apikey':        SB_KEY,
+    'Authorization': 'Bearer ' + SB_KEY,
+    'Prefer':        'return=representation'
+};
 
-let corriente
+let ultimoCalculo = null;
 
-/* FORMULA ELECTRICA */
+// ─── CALCULAR ────────────────────────────────────────────────
+function calcular() {
+    const carga   = parseFloat(document.getElementById('carga').value);
+    const voltaje = parseFloat(document.getElementById('voltaje').value);
+    const fases   = parseInt(document.getElementById('fases').value);
+    const factor  = parseFloat(document.getElementById('factor').value);
 
-if(fases==1){
+    if (!carga || carga <= 0) return;
 
-corriente=carga/voltaje
+    // Fórmula eléctrica
+    let I = fases === 1
+        ? carga / voltaje
+        : carga / (voltaje * Math.sqrt(3));
+    I = I * factor;
 
-}else{
+    // Calibre AWG — NOM-001-SEDE-2012
+    let awg = '14 AWG';
+    if (I > 15)  awg = '12 AWG';
+    if (I > 20)  awg = '10 AWG';
+    if (I > 30)  awg = '8 AWG';
+    if (I > 40)  awg = '6 AWG';
+    if (I > 55)  awg = '4 AWG';
+    if (I > 70)  awg = '2 AWG';
+    if (I > 95)  awg = '1/0 AWG';
+    if (I > 125) awg = '2/0 AWG';
+    if (I > 150) awg = '3/0 AWG';
+    if (I > 200) awg = '4/0 AWG';
 
-corriente=carga/(voltaje*Math.sqrt(3))
+    // Breaker NEMA estándar
+    const breakerStd = [15,20,25,30,40,50,60,70,80,90,100,125,150,175,200,225,250,300,350,400];
+    const breakerVal = breakerStd.find(b => b >= I) || 400;
+    const breakerStr = '1x' + breakerVal + 'A';
 
+    // Conduit EMT
+    let conduit = '3/4"';
+    if (I > 30)  conduit = '1"';
+    if (I > 60)  conduit = '1 1/4"';
+    if (I > 100) conduit = '1 1/2"';
+    if (I > 150) conduit = '2"';
+
+    // Mostrar resultados
+    document.getElementById('corriente').innerHTML =
+        I.toFixed(2) + '<span class="result-unit"> A</span>';
+    document.getElementById('awg').textContent     = awg;
+    document.getElementById('breaker').textContent = breakerStr;
+    document.getElementById('conduit').textContent = conduit;
+
+    // Objeto listo para Supabase — nombres exactos de columnas
+    ultimoCalculo = {
+        carga:     carga,
+        voltaje:   voltaje,
+        fases:     fases,
+        factor:    factor,
+        corriente: I.toFixed(2),
+        awg:       awg,
+        breaker:   breakerStr,
+        conduit:   conduit
+    };
 }
 
-corriente=corriente*1.25
+// ─── GUARDAR EN SUPABASE ─────────────────────────────────────
+async function guardar() {
+    if (!ultimoCalculo) {
+        calcular();
+    }
+    if (!ultimoCalculo) {
+        alert('Primero realiza un cálculo');
+        return;
+    }
 
-corriente=corriente.toFixed(2)
+    const btn = document.getElementById('btnGuardar');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Guardando...';
 
-document.getElementById("corriente").innerText=corriente+" A"
+    try {
+        const res = await fetch(SB_URL + '/calculos_electricos', {
+            method:  'POST',
+            headers: SB_HEADERS,
+            body:    JSON.stringify(ultimoCalculo)
+        });
 
-/* CALIBRE AWG */
+        if (!res.ok) {
+            const txt = await res.text();
+            console.error('❌ Supabase respondió:', res.status, txt);
+            throw new Error('Status ' + res.status + ': ' + txt);
+        }
 
-let awg="14 AWG"
+        const saved = await res.json();
+        console.log('✅ Guardado en Supabase:', saved);
 
-if(corriente>15) awg="12 AWG"
-if(corriente>20) awg="10 AWG"
-if(corriente>30) awg="8 AWG"
-if(corriente>40) awg="6 AWG"
-if(corriente>55) awg="4 AWG"
-if(corriente>70) awg="3 AWG"
-if(corriente>85) awg="2 AWG"
+        mostrarAlerta('success');
+        cargarHistorial();
 
-document.getElementById("awg").innerText=awg
-
-/* BREAKER */
-
-let breaker=Math.ceil(corriente/10)*10
-
-document.getElementById("breaker").innerText="1x"+breaker+"A"
-
-guardar(carga,voltaje,fases,corriente,awg,breaker)
-
+    } catch (err) {
+        console.error('Error guardar electrico:', err);
+        mostrarAlerta('error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa fa-save"></i> Guardar';
+    }
 }
 
-/* GUARDAR EN BD */
+// ─── HISTORIAL ───────────────────────────────────────────────
+async function cargarHistorial() {
+    const div = document.getElementById('historial');
+    try {
+        const res = await fetch(
+            SB_URL + '/calculos_electricos?order=created_at.desc&limit=15',
+            { headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY } }
+        );
 
-async function guardar(carga,voltaje,fases,corriente,awg,breaker){
+        if (!res.ok) throw new Error('Error ' + res.status);
+        const data = await res.json();
 
-await fetch("/api/electrico",{
+        if (!Array.isArray(data) || !data.length) {
+            div.innerHTML = '<div class="empty-state">No hay cálculos guardados aún</div>';
+            return;
+        }
 
-method:"POST",
+        div.innerHTML = data.map(c => `
+            <div class="hist-item">
+                ⚡ <strong>${c.carga} W</strong> /
+                ${c.voltaje} V /
+                ${parseInt(c.fases) === 1 ? 'Monofásico' : 'Trifásico'} /
+                FD: ${c.factor} →
+                <strong>${c.corriente} A</strong> |
+                ${c.awg} | ${c.breaker} | Conduit ${c.conduit}
+            </div>
+        `).join('');
 
-headers:{
-"Content-Type":"application/json"
-},
-
-body:JSON.stringify({
-carga,
-voltaje,
-fases,
-corriente,
-awg,
-breaker
-})
-
-})
-
+    } catch (err) {
+        console.error('Error historial:', err);
+        div.innerHTML = '<div class="empty-state">Error al cargar historial</div>';
+    }
 }
+
+// ─── HELPER ALERTAS ──────────────────────────────────────────
+function mostrarAlerta(tipo) {
+    const s = document.getElementById('alertSuccess');
+    const e = document.getElementById('alertError');
+    s.style.display = 'none';
+    e.style.display = 'none';
+    if (tipo === 'success') {
+        s.style.display = 'block';
+        setTimeout(() => { s.style.display = 'none'; }, 3500);
+    } else {
+        e.style.display = 'block';
+        setTimeout(() => { e.style.display = 'none'; }, 4000);
+    }
+}
+
+// ─── EVENTOS ────────────────────────────────────────────────
+['carga', 'voltaje', 'fases', 'factor'].forEach(id => {
+    document.getElementById(id).addEventListener('change', calcular);
+    document.getElementById(id).addEventListener('input',  calcular);
+});
+
+// ─── INICIO ──────────────────────────────────────────────────
+calcular();
+cargarHistorial();
 
 </script>
-
 </body>
 </html>

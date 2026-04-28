@@ -1,0 +1,28 @@
+# =============================================
+# .gitignore - CUED Backend
+# =============================================
+
+# Variables de entorno (NUNCA subir)
+.env
+.env.local
+.env.production
+
+# Dependencias
+node_modules/
+
+# Base de datos local
+*.db
+*.sqlite
+Database/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/

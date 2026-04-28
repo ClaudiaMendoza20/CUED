@@ -1,311 +1,112 @@
-const express = require("express");
-const mysql = require("mysql2");
-const cors = require("cors");
-const bodyParser = require("body-parser");
+const express = require('express');
+const cors = require('cors');
+const bcrypt = require('bcrypt');
 
 const app = express();
-
 app.use(cors());
-app.use(bodyParser.json());
-app.use(express.static("public"));
+app.use(express.json());
 
-/* ===============================
-   CONEXION MYSQL
-================================ */
+const SUPABASE_URL = 'https://tazheiutbleaexmcsopy.supabase.co/rest/v1';
+const SUPABASE_KEY = 'sb_publishable_i5hoZ9cKYlksVhpMcee_-Q_LQes-FOK';
 
-const db = mysql.createConnection({
+const headers = {
+  'Content-Type': 'application/json',
+  'apikey': SUPABASE_KEY,
+  'Authorization': `Bearer ${SUPABASE_KEY}`
+};
 
-host:"localhost",
-user:"root",
-password:"",
-database:"cued"
+// Helper para fetch a Supabase
+async function supabase(tabla, options = {}) {
+  const { method = 'GET', body, query = '' } = options;
+  const res = await fetch(`${SUPABASE_URL}/${tabla}${query}`, {
+    method,
+    headers: { ...headers, 'Prefer': method === 'POST' ? 'return=representation' : '' },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  return res.json();
+}
 
+// LOGIN
+app.post('/login', async (req, res) => {
+  const { username, password } = req.body;
+  const data = await supabase('usuarios', { query: `?username=eq.${username}&select=*` });
+  if (!data.length) return res.json({ success: false, error: 'Usuario no encontrado' });
+  const valid = await bcrypt.compare(password, data[0].password);
+  if (!valid) return res.json({ success: false, error: 'Contraseña incorrecta' });
+  res.json({ success: true, user: { id: data[0].id, nombre: data[0].nombre, rol: data[0].rol } });
 });
 
-db.connect(err=>{
-
-if(err){
-console.log("Error DB:",err);
-}else{
-console.log("MySQL conectado");
-}
-
+// DASHBOARD
+app.get('/api/dashboard', async (req, res) => {
+  const proyectos = await supabase('proyectos', { query: '?select=count' });
+  const calcE = await supabase('calculos_electricos', { query: '?select=count' });
+  const cotiz = await supabase('cotizaciones', { query: '?select=count' });
+  const recientes = await supabase('proyectos', { query: '?select=nombre,area,progreso&order=created_at.desc&limit=5' });
+  res.json({
+    proyectos: proyectos[0]?.count || 0,
+    calculos: calcE[0]?.count || 0,
+    cotizaciones: cotiz[0]?.count || 0,
+    alertas: 0,
+    recientes
+  });
 });
 
-/* ===============================
-   DASHBOARD
-================================ */
-
-app.get("/api/dashboard",(req,res)=>{
-
-let data={}
-
-db.query("SELECT COUNT(*) total FROM proyectos",(e,r)=>{
-
-data.proyectos=r[0].total
-
-db.query(`
-SELECT
-(SELECT COUNT(*) FROM electrico)+
-(SELECT COUNT(*) FROM hvac)+
-(SELECT COUNT(*) FROM hidraulico)+
-(SELECT COUNT(*) FROM incendios)
-AS total
-`,(e,r)=>{
-
-data.calculos=r[0].total
-
-db.query("SELECT COUNT(*) total FROM cotizaciones",(e,r)=>{
-
-data.cotizaciones=r[0].total
-
-db.query(`
-SELECT nombre,area,progreso
-FROM proyectos
-ORDER BY id DESC
-LIMIT 5
-`,(e,r)=>{
-
-data.recientes=r
-
-res.json(data)
-
-})
-
-})
-
-})
-
-})
-
-})
-
-/* ===============================
-   PROYECTOS
-================================ */
-
-app.get("/api/proyectos",(req,res)=>{
-
-db.query("SELECT * FROM proyectos ORDER BY id DESC",(e,r)=>{
-
-res.json(r)
-
-})
-
-})
-
-app.post("/api/proyectos",(req,res)=>{
-
-let {nombre,area,progreso}=req.body
-
-db.query(
-
-"INSERT INTO proyectos(nombre,area,progreso) VALUES(?,?,?)",
-[nombre,area,progreso],
-
-(e,r)=>{
-
-res.json({ok:true})
-
-}
-
-)
-
-})
-
-/* ===============================
-   CALCULO ELECTRICO
-================================ */
-
-app.post("/api/electrico",(req,res)=>{
-
-let {watts,voltaje,fases}=req.body
-
-let corriente=0
-
-if(fases=="Monofasico"){
-
-corriente=watts/voltaje
-
-}else{
-
-corriente=watts/(voltaje*1.732)
-
-}
-
-let calibre=""
-
-if(corriente<15) calibre="14 AWG"
-else if(corriente<20) calibre="12 AWG"
-else if(corriente<30) calibre="10 AWG"
-else if(corriente<40) calibre="8 AWG"
-else calibre="6 AWG"
-
-let proteccion=Math.ceil(corriente/10)*10+"A"
-
-db.query(
-"INSERT INTO electrico(watts,voltaje,fases,corriente,calibre,proteccion) VALUES(?,?,?,?,?,?)",
-[watts,voltaje,fases,corriente,calibre,proteccion]
-)
-
-res.json({
-
-corriente:corriente.toFixed(2),
-calibre,
-proteccion
-
-})
-
-})
-
-/* ===============================
-   HVAC
-================================ */
-
-app.post("/api/hvac",(req,res)=>{
-
-let {area,altura}=req.body
-
-let volumen=area*altura
-
-let btu=volumen*200
-
-let ton=btu/12000
-
-db.query(
-"INSERT INTO hvac(area,altura,btu,ton) VALUES(?,?,?,?)",
-[area,altura,btu,ton]
-)
-
-res.json({
-
-btu:Math.round(btu),
-ton:ton.toFixed(2)
-
-})
-
-})
-
-/* ===============================
-   HIDRAULICO
-================================ */
-
-app.post("/api/hidraulico",(req,res)=>{
-
-let {gasto,diametro}=req.body
-
-let area=Math.PI*(diametro/2)*(diametro/2)
-
-let velocidad=gasto/area
-
-db.query(
-"INSERT INTO hidraulico(gasto,diametro,velocidad) VALUES(?,?,?)",
-[gasto,diametro,velocidad]
-)
-
-res.json({
-
-velocidad:velocidad.toFixed(2)
-
-})
-
-})
-
-/* ===============================
-   CONTRA INCENDIOS
-================================ */
-
-app.post("/api/incendios",(req,res)=>{
-
-let {area}=req.body
-
-let rociadores=Math.ceil(area/12)
-
-db.query(
-"INSERT INTO incendios(area,rociadores) VALUES(?,?)",
-[area,rociadores]
-)
-
-res.json({
-
-rociadores
-
-})
-
-})
-
-/* ===============================
-   COTIZACIONES
-================================ */
-
-app.post("/api/cotizacion",(req,res)=>{
-
-let {cliente,proyecto,total}=req.body
-
-db.query(
-
-"INSERT INTO cotizaciones(cliente,proyecto,total) VALUES(?,?,?)",
-[cliente,proyecto,total],
-
-(e,r)=>{
-
-res.json({ok:true})
-
-}
-
-)
-
-})
-
-app.get("/api/cotizaciones",(req,res)=>{
-
-db.query("SELECT * FROM cotizaciones ORDER BY id DESC",(e,r)=>{
-
-res.json(r)
-
-})
-
-})
-
-/* ===============================
-   USUARIOS
-================================ */
-
-app.post("/api/usuarios",(req,res)=>{
-
-let {nombre,email,password}=req.body
-
-db.query(
-
-"INSERT INTO usuarios(nombre,email,password) VALUES(?,?,?)",
-[nombre,email,password],
-
-(e,r)=>{
-
-res.json({ok:true})
-
-}
-
-)
-
-})
-
-app.get("/api/usuarios",(req,res)=>{
-
-db.query("SELECT id,nombre,email FROM usuarios",(e,r)=>{
-
-res.json(r)
-
-})
-
-})
-
-/* ===============================
-   SERVER
-================================ */
-
-app.listen(3000,()=>{
-
-console.log("Servidor corriendo en http://localhost:3000")
-
-})
+// PROYECTOS
+app.get('/proyectos', async (req, res) => {
+  const data = await supabase('proyectos', { query: '?order=created_at.desc' });
+  res.json(data);
+});
+
+app.post('/proyectos', async (req, res) => {
+  const data = await supabase('proyectos', { method: 'POST', body: req.body });
+  res.json(data);
+});
+
+// ELÉCTRICO
+app.post('/api/electrico', async (req, res) => {
+  const data = await supabase('calculos_electricos', { method: 'POST', body: req.body });
+  res.json(data);
+});
+
+// HIDRÁULICO
+app.get('/hidraulico', async (req, res) => {
+  const data = await supabase('calculos_hidraulicos', { query: '?order=created_at.desc&limit=10' });
+  res.json(data);
+});
+
+app.post('/hidraulico', async (req, res) => {
+  const data = await supabase('calculos_hidraulicos', { method: 'POST', body: req.body });
+  res.json(data);
+});
+
+// HVAC
+app.get('/hvac', async (req, res) => {
+  const data = await supabase('calculos_hvac', { query: '?order=created_at.desc&limit=10' });
+  res.json(data);
+});
+
+app.post('/hvac', async (req, res) => {
+  const data = await supabase('calculos_hvac', { method: 'POST', body: req.body });
+  res.json(data);
+});
+
+// INCENDIOS
+app.post('/api/incendios', async (req, res) => {
+  const data = await supabase('calculos_incendios', { method: 'POST', body: req.body });
+  res.json(data);
+});
+
+// COTIZACIONES
+app.post('/api/cotizacion', async (req, res) => {
+  const { cliente, proyecto, items } = req.body;
+  const total = items.reduce((s, i) => s + i.cant * i.precio, 0);
+  const cotiz = await supabase('cotizaciones', { method: 'POST', body: { cliente, referencia: proyecto, total } });
+  const cotizId = cotiz[0]?.id;
+  if (cotizId && items.length) {
+    const itemsData = items.map(i => ({ cotizacion_id: cotizId, descripcion: i.desc, cantidad: i.cant, precio_unitario: i.precio }));
+    await supabase('cotizaciones_items', { method: 'POST', body: itemsData });
+  }
+  res.json({ success: true });
+});
+
+app.listen(3000, () => console.log('🚀 Servidor CUED en http://localhost:3000'));

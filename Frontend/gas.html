@@ -1,28 +1,336 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>Gas / Aire</title>
-
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CUED - Gas / Aire</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
-body{background:#07121f;color:white;font-family:sans-serif;padding:30px;}
-.box{background:#0f2238;padding:20px;border-radius:15px;}
+.calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+.result-card{
+    background:#0f1f38;
+    border:1px solid rgba(100,200,255,0.15);
+    border-radius:16px;
+    padding:28px;
+    text-align:center;
+}
+.result-big{
+    font-family:'Rajdhani',sans-serif;
+    font-size:64px;
+    font-weight:700;
+    color:#64c8ff;
+    line-height:1;
+}
+.info-box{
+    background:rgba(100,200,255,0.05);
+    border:1px solid rgba(100,200,255,0.1);
+    border-radius:12px;
+    padding:16px;
+    margin-top:20px;
+    font-size:12px;
+    color:rgba(255,255,255,0.45);
+    line-height:1.7;
+    text-align:left;
+}
+.hist-scroll{max-height:220px;overflow-y:auto;}
+.hist-scroll::-webkit-scrollbar{width:4px;}
+.hist-scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:99px;}
 </style>
 </head>
-
 <body>
+<div id="sidebar-container"></div>
 
-<h1>🌬️ Gas / Aire</h1>
+<div class="main">
+    <div class="page-header">
+        <div class="page-title">
+            <h1>🌬️ Gas y Aire Comprimido</h1>
+            <p>Cálculo de redes de gas LP, natural y aire industrial.</p>
+        </div>
+    </div>
 
-<div class="box">
-    <p>Cálculos de gas y aire</p>
+    <div class="calc-grid">
+
+        <!-- PARÁMETROS -->
+        <div class="card">
+            <h3>Parámetros del Sistema</h3>
+
+            <label>Tipo de Gas</label>
+            <select id="tipoGas">
+                <option value="lp">Gas LP (Propano / Butano)</option>
+                <option value="natural">Gas Natural</option>
+                <option value="aire">Aire Comprimido</option>
+            </select>
+
+            <label>Consumo Total (MJ/hr — o SCFM si es Aire)</label>
+            <input id="consumo" type="number" value="100" min="1" placeholder="MJ/hr">
+
+            <label>Longitud de Red (m)</label>
+            <input id="longitud" type="number" value="25" min="1" placeholder="metros">
+
+            <label>Presión de Suministro (kPa)</label>
+            <select id="presion">
+                <option value="2.8">2.8 kPa — Baja presión doméstica</option>
+                <option value="7">7 kPa — Media-baja</option>
+                <option value="30">30 kPa — Media presión</option>
+                <option value="100">100 kPa — Industrial</option>
+            </select>
+
+            <label>Caída de Presión Permitida (%)</label>
+            <input id="caida" type="number" value="10" min="1" max="30">
+
+            <div style="margin-top:24px;display:flex;gap:12px;">
+                <button class="btn-primary" onclick="calcular()" style="flex:1">
+                    <i class="fa fa-calculator"></i> Calcular
+                </button>
+                <button class="btn-secondary" id="btnGuardar" onclick="guardar()">
+                    <i class="fa fa-save"></i> Guardar
+                </button>
+            </div>
+
+            <div id="alertSuccess" class="alert-success" style="margin-top:12px;display:none">
+                ✅ Guardado correctamente en Supabase
+            </div>
+            <div id="alertError" class="alert-error" style="margin-top:12px;display:none">
+                ❌ Error al guardar — revisa consola (F12)
+            </div>
+        </div>
+
+        <!-- RESULTADO -->
+        <div class="result-card">
+            <div class="result-label">Diámetro de Tubería</div>
+            <div class="result-big" id="diametro">—</div>
+
+            <div class="mini-cards" style="margin-top:28px">
+                <div class="mini-card">
+                    <div class="mini-label">Caudal</div>
+                    <div class="mini-val" id="caudal">—</div>
+                </div>
+                <div class="mini-card">
+                    <div class="mini-label">Velocidad</div>
+                    <div class="mini-val" id="velocidad">—</div>
+                </div>
+            </div>
+
+            <div class="info-box" id="infoBox">
+                Completa los parámetros y presiona Calcular para obtener el dimensionamiento de tu red.
+            </div>
+        </div>
+
+    </div>
+
+    <!-- HISTORIAL -->
+    <div class="card" style="margin-top:24px">
+        <h3>Historial de Cálculos</h3>
+        <div class="hist-scroll" id="historial">
+            <div class="empty-state">Cargando historial...</div>
+        </div>
+    </div>
+
 </div>
 
+<script src="config.js"></script>
+<script src="sidebar.js"></script>
 <script>
-if(localStorage.getItem("login")!=="true"){
-    window.location="login.html";
-}
-</script>
 
+// Sidebar
+document.getElementById('sidebar-container').innerHTML = renderSidebar('gas');
+
+// Supabase directo
+const SB_URL = 'https://tazheiutbleaexmcsopy.supabase.co/rest/v1';
+const SB_KEY = 'sb_publishable_i5hoZ9cKYlksVhpMcee_-Q_LQes-FOK';
+const SB_HEADERS = {
+    'Content-Type':  'application/json',
+    'apikey':        SB_KEY,
+    'Authorization': 'Bearer ' + SB_KEY,
+    'Prefer':        'return=representation'
+};
+
+let ultimoCalculo = null;
+
+// ─── CALCULAR ────────────────────────────────────────────────
+function calcular() {
+    const tipo    = document.getElementById('tipoGas').value;
+    const consumo = parseFloat(document.getElementById('consumo').value);
+    const longitud= parseFloat(document.getElementById('longitud').value);
+    const presion = parseFloat(document.getElementById('presion').value);
+    const caida   = parseFloat(document.getElementById('caida').value) / 100;
+
+    if (!consumo || !longitud) return;
+
+    let caudal_str, velocidad_str, diametro, norma;
+
+    if (tipo === 'aire') {
+        // Aire comprimido: SCFM → m³/hr
+        const caudal_m3h = consumo * 1.699;
+        const velocidad_max = 6; // m/s
+        const area = caudal_m3h / 3600 / velocidad_max;
+        const d_calc = Math.sqrt(4 * area / Math.PI) * 1000;
+
+        let d_real = 15; diametro = '1/2"';
+        if (d_calc > 15) { diametro = '3/4"';    d_real = 20; }
+        if (d_calc > 20) { diametro = '1"';       d_real = 25; }
+        if (d_calc > 25) { diametro = '1 1/4"';  d_real = 32; }
+        if (d_calc > 32) { diametro = '1 1/2"';  d_real = 40; }
+        if (d_calc > 40) { diametro = '2"';       d_real = 50; }
+        if (d_calc > 50) { diametro = '2 1/2"';  d_real = 63; }
+
+        const vel = caudal_m3h / 3600 / (Math.PI * Math.pow(d_real / 2000, 2));
+        caudal_str    = caudal_m3h.toFixed(1) + ' m³/h';
+        velocidad_str = vel.toFixed(1) + ' m/s';
+        norma = 'NOM-011-STPS-2001';
+
+        ultimoCalculo = {
+            tipo_gas:    tipo,
+            consumo:     consumo,
+            longitud:    longitud,
+            presion_kpa: presion,
+            diametro:    diametro,
+            caudal:      caudal_str
+        };
+
+    } else {
+        // Gas LP o Natural — Renouard simplificado
+        const poderCal = tipo === 'lp' ? 93.5 : 37.3; // MJ/m³
+        const caudal_m3h = consumo / poderCal;
+        const dp = presion * caida;
+
+        let d_calc = 15 * Math.pow(caudal_m3h * longitud / (dp * presion + 0.001), 0.2);
+
+        let d_real = 12.7; diametro = '1/2"';
+        if (d_calc > 12.7) { diametro = '3/4"';   d_real = 19; }
+        if (d_calc > 19)   { diametro = '1"';      d_real = 25; }
+        if (d_calc > 25)   { diametro = '1 1/4"'; d_real = 32; }
+        if (d_calc > 32)   { diametro = '1 1/2"'; d_real = 38; }
+        if (d_calc > 38)   { diametro = '2"';      d_real = 50; }
+        if (d_calc > 50)   { diametro = '2 1/2"'; d_real = 63; }
+
+        const vel = caudal_m3h / 3600 / (Math.PI * Math.pow(d_real / 2000, 2));
+        caudal_str    = caudal_m3h.toFixed(2) + ' m³/h';
+        velocidad_str = vel.toFixed(1) + ' m/s';
+        norma = tipo === 'lp' ? 'NOM-004-SEDG-2004' : 'NOM-004-SEDG / CFE';
+
+        ultimoCalculo = {
+            tipo_gas:    tipo,
+            consumo:     consumo,
+            longitud:    longitud,
+            presion_kpa: presion,
+            diametro:    diametro,
+            caudal:      caudal_str
+        };
+    }
+
+    // Mostrar resultados
+    document.getElementById('diametro').textContent  = diametro;
+    document.getElementById('caudal').textContent    = caudal_str;
+    document.getElementById('velocidad').textContent = velocidad_str;
+    document.getElementById('infoBox').textContent   =
+        'Norma aplicable: ' + norma +
+        '. Caudal calculado con base en el consumo declarado. ' +
+        'Verificar con proveedor de gas local antes de ejecutar.';
+}
+
+// ─── GUARDAR EN SUPABASE ─────────────────────────────────────
+async function guardar() {
+    if (!ultimoCalculo) {
+        calcular();
+    }
+    if (!ultimoCalculo) {
+        alert('Primero realiza un cálculo');
+        return;
+    }
+
+    const btn = document.getElementById('btnGuardar');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Guardando...';
+
+    try {
+        const res = await fetch(SB_URL + '/calculos_gas', {
+            method:  'POST',
+            headers: SB_HEADERS,
+            body:    JSON.stringify(ultimoCalculo)
+        });
+
+        if (!res.ok) {
+            const txt = await res.text();
+            console.error('❌ Supabase error:', res.status, txt);
+            throw new Error(txt);
+        }
+
+        const saved = await res.json();
+        console.log('✅ Gas guardado:', saved);
+
+        mostrarAlerta('success');
+        cargarHistorial();
+
+    } catch (err) {
+        console.error('Error guardar gas:', err);
+        mostrarAlerta('error');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa fa-save"></i> Guardar';
+    }
+}
+
+// ─── HISTORIAL ───────────────────────────────────────────────
+async function cargarHistorial() {
+    const div = document.getElementById('historial');
+    try {
+        const res = await fetch(
+            SB_URL + '/calculos_gas?order=created_at.desc&limit=15',
+            { headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY } }
+        );
+
+        if (!res.ok) throw new Error('Error ' + res.status);
+        const data = await res.json();
+
+        if (!Array.isArray(data) || !data.length) {
+            div.innerHTML = '<div class="empty-state">No hay cálculos guardados aún</div>';
+            return;
+        }
+
+        const tipoLabel = { lp: 'Gas LP', natural: 'Gas Natural', aire: 'Aire Comprimido' };
+
+        div.innerHTML = data.map(c => `
+            <div class="hist-item">
+                🌬️ <strong>${tipoLabel[c.tipo_gas] || c.tipo_gas}</strong> /
+                Consumo: ${c.consumo} /
+                ${c.longitud} m /
+                ${c.presion_kpa} kPa →
+                <strong>${c.diametro}</strong> | ${c.caudal}
+            </div>
+        `).join('');
+
+    } catch (err) {
+        console.error('Error historial gas:', err);
+        div.innerHTML = '<div class="empty-state">Error al cargar historial</div>';
+    }
+}
+
+// ─── HELPER ALERTAS ──────────────────────────────────────────
+function mostrarAlerta(tipo) {
+    const s = document.getElementById('alertSuccess');
+    const e = document.getElementById('alertError');
+    s.style.display = 'none';
+    e.style.display = 'none';
+    if (tipo === 'success') {
+        s.style.display = 'block';
+        setTimeout(() => { s.style.display = 'none'; }, 3500);
+    } else {
+        e.style.display = 'block';
+        setTimeout(() => { e.style.display = 'none'; }, 4000);
+    }
+}
+
+// ─── EVENTOS ─────────────────────────────────────────────────
+['tipoGas', 'consumo', 'longitud', 'presion', 'caida'].forEach(id => {
+    document.getElementById(id).addEventListener('change', calcular);
+    document.getElementById(id).addEventListener('input',  calcular);
+});
+
+// ─── INICIO ──────────────────────────────────────────────────
+calcular();
+cargarHistorial();
+
+</script>
 </body>
 </html>
