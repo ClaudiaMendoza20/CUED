@@ -19,22 +19,27 @@ canvas{background:#020c1a;border-radius:12px;display:block;width:100%;height:aut
 <div class="main">
     <div class="page-header">
         <div class="page-title">
-            <h1>🔥 Sistema Contra Incendios</h1>
-            <p>Diseño automático de red de rociadores y alarmas.</p>
+            <h1><i class="fa fa-fire" style="color:#ff6b6b;margin-right:10px"></i>Sistema Contra Incendios</h1>
+            <p>Diseño automático de red de rociadores — NFPA 13.</p>
         </div>
         <div style="display:flex;gap:12px">
-            <button class="btn-secondary" onclick="guardar()"><i class="fa fa-save"></i>Guardar</button>
+            <button class="btn-secondary" onclick="guardar()">
+                <i class="fa fa-save"></i> Guardar
+            </button>
         </div>
     </div>
 
-    <div id="alertSuccess" class="alert-success">✅ Guardado en Supabase</div>
-    <div id="alertError" class="alert-error">❌ Error al guardar</div>
+    <div id="alertSuccess" class="alert-success">
+        <i class="fa fa-circle-check"></i> Guardado en Supabase
+    </div>
+    <div id="alertError" class="alert-error">
+        <i class="fa fa-circle-xmark"></i> Error al guardar
+    </div>
 
     <div class="main-grid">
-        <!-- PARÁMETROS -->
         <div>
             <div class="card">
-                <h3>⚙️ Parámetros del Área</h3>
+                <h3><i class="fa fa-sliders" style="color:#ffc400;margin-right:8px"></i>Parámetros del Área</h3>
 
                 <label>Ancho (m)</label>
                 <input id="ancho" type="number" value="20">
@@ -56,12 +61,12 @@ canvas{background:#020c1a;border-radius:12px;display:block;width:100%;height:aut
                 </select>
 
                 <button class="btn-primary" onclick="calcular()" style="margin-top:20px;width:100%">
-                    <i class="fa fa-calculator"></i>Calcular Sistema
+                    <i class="fa fa-calculator"></i> Calcular Sistema
                 </button>
             </div>
 
             <div class="card resumen" id="resumenCard" style="display:none">
-                <h3>📊 Resumen de Materiales</h3>
+                <h3><i class="fa fa-list-check" style="color:#ffc400;margin-right:8px"></i>Resumen de Materiales</h3>
                 <p>Rociadores: <strong id="rRes">—</strong></p>
                 <p>Tubería Ramal: <strong id="ramalRes">—</strong></p>
                 <p>Tubería Principal: <strong id="principalRes">—</strong></p>
@@ -70,9 +75,8 @@ canvas{background:#020c1a;border-radius:12px;display:block;width:100%;height:aut
             </div>
         </div>
 
-        <!-- PLANO -->
         <div class="card">
-            <h3>📐 Vista de Planta</h3>
+            <h3><i class="fa fa-map" style="color:#ffc400;margin-right:8px"></i>Vista de Planta</h3>
             <canvas id="plano" width="600" height="500"></canvas>
         </div>
     </div>
@@ -88,137 +92,97 @@ let resultado = null;
 function calcular() {
     const ancho = parseFloat(document.getElementById('ancho').value);
     const largo = parseFloat(document.getElementById('largo').value);
-    const espS = parseFloat(document.getElementById('espS').value);
-    const espR = parseFloat(document.getElementById('espR').value);
+    const espS  = parseFloat(document.getElementById('espS').value);
+    const espR  = parseFloat(document.getElementById('espR').value);
 
     if(!ancho||!largo||!espS||!espR) return;
 
     const columnas = Math.ceil(ancho / espS);
-    const filas = Math.ceil(largo / espR);
-    const rociadores = columnas * filas;
-    const tuberiaRamal = filas * ancho;
+    const filas    = Math.ceil(largo / espR);
+    const rociadores       = columnas * filas;
+    const tuberiaRamal     = filas * ancho;
     const tuberiaPrincipal = largo;
+    const demanda = rociadores * 60;
 
-    // Cálculo hidráulico simplificado NFPA 13
-    const qRoc = 60; // LPM por rociador (mínimo)
-    const demanda = rociadores * qRoc;
-    const presion = '52 kPa (7.5 psi)';
-
-    document.getElementById('rRes').textContent = rociadores + ' pzas';
-    document.getElementById('ramalRes').textContent = tuberiaRamal.toFixed(0) + ' m';
+    document.getElementById('rRes').textContent         = rociadores + ' pzas';
+    document.getElementById('ramalRes').textContent     = tuberiaRamal.toFixed(0) + ' m';
     document.getElementById('principalRes').textContent = tuberiaPrincipal.toFixed(0) + ' m';
-    document.getElementById('demandaRes').textContent = demanda.toLocaleString() + ' LPM';
-    document.getElementById('presionRes').textContent = presion;
+    document.getElementById('demandaRes').textContent   = demanda.toLocaleString() + ' LPM';
+    document.getElementById('presionRes').textContent   = '52 kPa (7.5 psi)';
     document.getElementById('resumenCard').style.display = 'block';
 
-    resultado = { ancho, largo, esp_s: espS, esp_r: espR, rociadores, tuberia_ramal: tuberiaRamal, tuberia_principal: tuberiaPrincipal };
-
+    resultado = { ancho, largo, esp_s:espS, esp_r:espR, rociadores, tuberia_ramal:tuberiaRamal, tuberia_principal:tuberiaPrincipal };
     dibujar(columnas, filas, ancho, largo, espS, espR);
 }
 
 function dibujar(columnas, filas, ancho, largo, espS, espR) {
     const canvas = document.getElementById('plano');
-    const ctx = canvas.getContext('2d');
-    const W = canvas.width, H = canvas.height;
-    const margen = 55;
-    const w = W - margen * 2;
-    const h = H - margen * 2;
+    const ctx    = canvas.getContext('2d');
+    const W=canvas.width, H=canvas.height;
+    const margen=55;
+    const w=W-margen*2, h=H-margen*2;
 
-    ctx.clearRect(0, 0, W, H);
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='#020c1a'; ctx.fillRect(0,0,W,H);
 
-    // Fondo
-    ctx.fillStyle = '#020c1a';
-    ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle='rgba(255,196,0,0.8)'; ctx.lineWidth=2;
+    ctx.strokeRect(margen,margen,w,h);
 
-    // Borde del área
-    ctx.strokeStyle = 'rgba(255,196,0,0.8)';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(margen, margen, w, h);
+    ctx.strokeStyle='#ffc400'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(margen,margen+20); ctx.lineTo(margen+w,margen+20); ctx.stroke();
 
-    // Tubería principal (horizontal, arriba)
-    ctx.strokeStyle = '#ffc400';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(margen, margen + 20);
-    ctx.lineTo(margen + w, margen + 20);
-    ctx.stroke();
-
-    // Ramales (verticales)
-    ctx.strokeStyle = 'rgba(255,100,80,0.6)';
-    ctx.lineWidth = 1.5;
-    const dx = columnas > 1 ? w / (columnas - 1) : w / 2;
-    for(let i = 0; i < columnas; i++) {
-        const x = margen + (columnas === 1 ? w/2 : i * dx);
-        ctx.beginPath();
-        ctx.moveTo(x, margen + 20);
-        ctx.lineTo(x, margen + h);
-        ctx.stroke();
+    ctx.strokeStyle='rgba(255,100,80,0.6)'; ctx.lineWidth=1.5;
+    const dx = columnas>1 ? w/(columnas-1) : w/2;
+    for(let i=0;i<columnas;i++){
+        const x=margen+(columnas===1?w/2:i*dx);
+        ctx.beginPath(); ctx.moveTo(x,margen+20); ctx.lineTo(x,margen+h); ctx.stroke();
     }
 
-    // Rociadores
-    const dy = filas > 1 ? h / (filas - 1) : h / 2;
-    for(let i = 0; i < columnas; i++) {
-        for(let j = 0; j < filas; j++) {
-            const x = margen + (columnas === 1 ? w/2 : i * dx);
-            const y = margen + (filas === 1 ? h/2 : j * dy);
-
-            // Símbolo rociador
-            ctx.fillStyle = '#ff5544';
+    const dy = filas>1 ? h/(filas-1) : h/2;
+    for(let i=0;i<columnas;i++){
+        for(let j=0;j<filas;j++){
+            const x=margen+(columnas===1?w/2:i*dx);
+            const y=margen+(filas===1?h/2:j*dy);
+            ctx.fillStyle='#ff5544';
+            ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2); ctx.fill();
+            ctx.strokeStyle='rgba(255,255,255,0.7)'; ctx.lineWidth=1;
             ctx.beginPath();
-            ctx.arc(x, y, 5, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Cruz
-            ctx.strokeStyle = 'rgba(255,255,255,0.7)';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(x - 9, y); ctx.lineTo(x + 9, y);
-            ctx.moveTo(x, y - 9); ctx.lineTo(x, y + 9);
+            ctx.moveTo(x-9,y); ctx.lineTo(x+9,y);
+            ctx.moveTo(x,y-9); ctx.lineTo(x,y+9);
             ctx.stroke();
         }
     }
 
-    // Etiquetas de dimensión
-    ctx.fillStyle = 'rgba(255,255,255,0.4)';
-    ctx.font = '11px Inter, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(`${ancho} m`, margen + w/2, H - 10);
-    ctx.save();
-    ctx.translate(15, margen + h/2);
-    ctx.rotate(-Math.PI/2);
-    ctx.fillText(`${largo} m`, 0, 0);
-    ctx.restore();
+    ctx.fillStyle='rgba(255,255,255,0.4)';
+    ctx.font='11px Inter,sans-serif'; ctx.textAlign='center';
+    ctx.fillText(`${ancho} m`,margen+w/2,H-10);
+    ctx.save(); ctx.translate(15,margen+h/2); ctx.rotate(-Math.PI/2);
+    ctx.fillText(`${largo} m`,0,0); ctx.restore();
 
-    // Leyenda
-    ctx.fillStyle = '#ffc400';
-    ctx.fillRect(margen, H - 38, 16, 4);
-    ctx.fillStyle = 'rgba(255,255,255,0.4)';
-    ctx.textAlign = 'left';
-    ctx.fillText('Tubería Principal', margen + 20, H - 32);
-
-    ctx.fillStyle = '#ff5544';
-    ctx.beginPath(); ctx.arc(margen + 8, H - 18, 4, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = 'rgba(255,255,255,0.4)';
-    ctx.fillText('Rociador', margen + 20, H - 14);
+    ctx.fillStyle='#ffc400'; ctx.fillRect(margen,H-38,16,4);
+    ctx.fillStyle='rgba(255,255,255,0.4)'; ctx.textAlign='left';
+    ctx.fillText('Tubería Principal',margen+20,H-32);
+    ctx.fillStyle='#ff5544';
+    ctx.beginPath(); ctx.arc(margen+8,H-18,4,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.4)';
+    ctx.fillText('Rociador',margen+20,H-14);
 }
 
 async function guardar() {
-    if(!resultado) { calcular(); }
+    if(!resultado){ calcular(); }
     if(!resultado) return;
     try {
-        await sbFetch('calculos_incendios', { method: 'POST', body: resultado });
-        const s = document.getElementById('alertSuccess');
-        s.style.display = 'block';
-        setTimeout(()=>s.style.display='none', 3000);
+        await sbFetch('calculos_incendios', { method:'POST', body:resultado });
+        const s=document.getElementById('alertSuccess');
+        s.style.display='block'; setTimeout(()=>s.style.display='none',3000);
     } catch(err) {
-        const e = document.getElementById('alertError');
-        e.style.display = 'block';
-        setTimeout(()=>e.style.display='none', 3000);
+        const e=document.getElementById('alertError');
+        e.style.display='block'; setTimeout(()=>e.style.display='none',3000);
     }
 }
 
-['ancho','largo','espS','espR'].forEach(id => {
-    document.getElementById(id).addEventListener('input', ()=>{ if(resultado) calcular(); });
+['ancho','largo','espS','espR'].forEach(id=>{
+    document.getElementById(id).addEventListener('input',()=>{ if(resultado) calcular(); });
 });
 
 calcular();

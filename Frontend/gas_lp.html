@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CUED - Gas LP Completo</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+.tabs{display:flex;gap:4px;margin-bottom:24px;background:rgba(255,255,255,0.03);padding:4px;border-radius:12px;}
+.tab{flex:1;padding:10px;text-align:center;border-radius:9px;cursor:pointer;font-size:13px;color:rgba(255,255,255,0.4);transition:all 0.2s;}
+.tab.active{background:#ffc400;color:#060e1a;font-weight:700;}
+.tab-content{display:none;} .tab-content.active{display:block;}
+.main-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+.result-card{background:#0f1f38;border:1px solid rgba(255,196,0,0.15);border-radius:16px;padding:28px;text-align:center;}
+.result-big{font-family:'Rajdhani',sans-serif;font-size:60px;font-weight:700;color:#ffc400;line-height:1;}
+.aparato-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+.aparato-row:last-child{border:none;}
+.aparato-icon{width:32px;text-align:center;font-size:15px;color:#ffc400;}
+.aparato-name{flex:1;font-size:13px;}
+.aparato-cons{font-size:11px;color:rgba(255,255,255,0.3);}
+.aparato-qty{width:70px;padding:6px 10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;color:white;font-size:13px;text-align:center;}
+.aparato-qty:focus{outline:none;border-color:rgba(255,196,0,0.4);}
+.hist-scroll{max-height:200px;overflow-y:auto;}
+</style>
+</head>
+<body>
+<div id="sidebar-container"></div>
+
+<div class="main">
+    <div class="page-header">
+        <div class="page-title">
+            <h1><i class="fa fa-fire-flame-curved" style="color:#ffc400;margin-right:10px"></i>Gas LP — Cálculo Completo</h1>
+            <p>Aparatos de consumo, red de distribución y tanque estacionario.</p>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" onclick="showTab('aparatos',this)">
+            <i class="fa fa-utensils" style="margin-right:6px"></i>Aparatos de Consumo
+        </div>
+        <div class="tab" onclick="showTab('red',this)">
+            <i class="fa fa-pipe-section" style="margin-right:6px"></i>Red de Distribución
+        </div>
+        <div class="tab" onclick="showTab('tanque',this)">
+            <i class="fa fa-gas-pump" style="margin-right:6px"></i>Tanque y Vaporización
+        </div>
+    </div>
+
+    <!-- TAB 1: APARATOS -->
+    <div id="tab-aparatos" class="tab-content active">
+        <div class="main-grid">
+            <div class="card">
+                <h3>Aparatos de Consumo</h3>
+                <p style="font-size:11px;color:rgba(255,255,255,0.3);margin-bottom:16px">Ingresa la cantidad de cada aparato en el proyecto.</p>
+                <div id="aparatosContainer"></div>
+
+                <div style="margin-top:20px;display:flex;gap:12px;">
+                    <button class="btn-primary" onclick="calcAparatos()" style="flex:1">
+                        <i class="fa fa-calculator"></i> Calcular
+                    </button>
+                    <button class="btn-secondary" id="btnGAparat" onclick="guardarAparatos()">
+                        <i class="fa fa-save"></i> Guardar
+                    </button>
+                </div>
+                <div id="alertSuccessA" class="alert-success" style="margin-top:12px;display:none">
+                    <i class="fa fa-circle-check"></i> Guardado
+                </div>
+                <div id="alertErrorA" class="alert-error" style="margin-top:12px;display:none">
+                    <i class="fa fa-circle-xmark"></i> Error
+                </div>
+            </div>
+
+            <div class="result-card">
+                <div class="result-label">Consumo Total</div>
+                <div class="result-big" id="consumoTotal">— <span style="font-size:22px">m³/hr</span></div>
+                <div style="color:rgba(255,196,0,0.5);font-size:13px;margin-top:6px" id="consumoMJhr">— MJ/hr</div>
+
+                <div class="mini-cards" style="margin-top:20px">
+                    <div class="mini-card"><div class="mini-label">Aparatos activos</div><div class="mini-val" id="aparActivos">—</div></div>
+                    <div class="mini-card"><div class="mini-label">Gas LP (kg/hr)</div><div class="mini-val" id="kghr">—</div></div>
+                </div>
+
+                <div style="margin-top:20px;background:rgba(255,196,0,0.05);border-radius:10px;padding:14px;text-align:left" id="desgApart"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2: RED -->
+    <div id="tab-red" class="tab-content">
+        <div class="main-grid">
+            <div class="card">
+                <h3>Red de Distribución Gas LP</h3>
+
+                <label>Consumo total (m³/hr)</label>
+                <input id="redConsumo" type="number" value="2.0" min="0.1" step="0.1">
+
+                <label>Longitud de red (m)</label>
+                <input id="redLongitud" type="number" value="25" min="1">
+
+                <label>Presión de suministro</label>
+                <select id="redPresion">
+                    <option value="baja">Baja presión (2.8 kPa — doméstica)</option>
+                    <option value="media">Media-baja (7 kPa)</option>
+                    <option value="industrial">Media presión (30 kPa — industrial)</option>
+                </select>
+
+                <label>Caída de presión permitida (%)</label>
+                <input id="redCaida" type="number" value="10" min="1" max="20">
+
+                <div style="margin-top:20px;">
+                    <button class="btn-primary" onclick="calcRed()" style="width:100%">
+                        <i class="fa fa-calculator"></i> Calcular Red
+                    </button>
+                </div>
+            </div>
+
+            <div class="result-card">
+                <div class="result-label">Diámetro de Tubería</div>
+                <div class="result-big" id="redDiam">—</div>
+
+                <div class="mini-cards" style="margin-top:24px">
+                    <div class="mini-card"><div class="mini-label">Velocidad</div><div class="mini-val" id="redVel">— m/s</div></div>
+                    <div class="mini-card"><div class="mini-label">Norma</div><div class="mini-val" style="font-size:12px">NOM-004-SEDG</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 3: TANQUE -->
+    <div id="tab-tanque" class="tab-content">
+        <div class="main-grid">
+            <div class="card">
+                <h3>Selección de Tanque Estacionario</h3>
+
+                <label>Consumo diario estimado (kg/día)</label>
+                <input id="tanqConsumo" type="number" value="20" min="1">
+
+                <label>Días de reserva</label>
+                <select id="tanqDias">
+                    <option value="7">7 días</option>
+                    <option value="10">10 días</option>
+                    <option value="15" selected>15 días</option>
+                    <option value="30">30 días</option>
+                </select>
+
+                <label>Tipo de clima</label>
+                <select id="tanqClima">
+                    <option value="1">Extremoso (Kt=1) — menor de -4°C</option>
+                    <option value="3">Altiplano (Kt=3) — +4°C</option>
+                    <option value="3.5" selected>Tropical (Kt=3.5) — +10°C — Tijuana/BC</option>
+                </select>
+
+                <label>Factor de llenado</label>
+                <select id="tanqLlenado">
+                    <option value="0.6" selected>60% (recomendado)</option>
+                    <option value="0.7">70%</option>
+                    <option value="0.8">80% (máximo)</option>
+                </select>
+
+                <div style="margin-top:20px;">
+                    <button class="btn-primary" onclick="calcTanque()" style="width:100%">
+                        <i class="fa fa-calculator"></i> Calcular Tanque
+                    </button>
+                </div>
+            </div>
+
+            <div class="result-card">
+                <div class="result-label">Capacidad del Tanque</div>
+                <div class="result-big" id="tanqCapacidad">— <span style="font-size:22px">Lt</span></div>
+
+                <div class="mini-cards" style="margin-top:24px">
+                    <div class="mini-card"><div class="mini-label">Modelo sugerido</div><div class="mini-val" id="tanqModelo">—</div></div>
+                    <div class="mini-card"><div class="mini-label">Vaporización Qv</div><div class="mini-val" id="tanqQv">— kg/hr</div></div>
+                    <div class="mini-card"><div class="mini-label">Gas requerido</div><div class="mini-val" id="tanqKg">— kg</div></div>
+                    <div class="mini-card"><div class="mini-label">Ubicación</div><div class="mini-val" id="tanqUbic">—</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top:24px">
+        <h3><i class="fa fa-clock-rotate-left" style="color:#ffc400;margin-right:8px"></i>Historial</h3>
+        <div class="hist-scroll" id="historial"><div class="empty-state">Cargando...</div></div>
+    </div>
+</div>
+
+<script src="config.js"></script>
+<script src="sidebar.js"></script>
+<script>
+document.getElementById('sidebar-container').innerHTML = renderSidebar('gas_lp');
+
+const SB_URL='https://tazheiutbleaexmcsopy.supabase.co/rest/v1';
+const SB_KEY='sb_publishable_i5hoZ9cKYlksVhpMcee_-Q_LQes-FOK';
+const HEADERS={'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=representation'};
+
+// Icono FA por aparato
+const APARATOS = [
+    {id:'estufa',         icon:'fa-fire',            name:'Estufa doméstica (4 quemadores)',  cons:0.630},
+    {id:'asador',         icon:'fa-fire-burner',     name:'Asador de patio',                  cons:0.566},
+    {id:'secadora',       icon:'fa-shirt',           name:'Secadora de ropa',                 cons:0.394},
+    {id:'calentador',     icon:'fa-temperature-high',name:'Calentador de depósito (40 gal)',  cons:0.464},
+    {id:'calentador100',  icon:'fa-temperature-high',name:'Calentador de depósito (100 gal)', cons:0.580},
+    {id:'calentador_paso',icon:'fa-droplet',         name:'Calentador de paso instantáneo',   cons:0.850},
+    {id:'horno',          icon:'fa-bread-slice',     name:'Horno de gas',                     cons:0.450},
+    {id:'calefactor',     icon:'fa-wind',            name:'Calefactor de ambiente',           cons:0.500},
+    {id:'freidora',       icon:'fa-oil-can',         name:'Freidora industrial',              cons:1.200},
+    {id:'fogon_indus',    icon:'fa-fire-burner',     name:'Fogón industrial (por quemador)',  cons:0.750},
+    {id:'plancha_indus',  icon:'fa-grip-lines',      name:'Plancha industrial',               cons:1.500},
+    {id:'motor_gas',      icon:'fa-gear',            name:'Motor a gas (por HP)',             cons:0.300},
+];
+
+const TANQUES = [120,180,300,500,1000,1600,2200,2800,3400,5000,13000];
+
+function showTab(name, el) {
+    document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.getElementById('tab-'+name).classList.add('active');
+    el.classList.add('active');
+}
+
+function renderAparatos() {
+    document.getElementById('aparatosContainer').innerHTML = APARATOS.map(a=>`
+        <div class="aparato-row">
+            <div class="aparato-icon"><i class="fa ${a.icon}"></i></div>
+            <div style="flex:1">
+                <div class="aparato-name">${a.name}</div>
+                <div class="aparato-cons">${a.cons} m³/hr</div>
+            </div>
+            <input class="aparato-qty" type="number" id="a_${a.id}" value="0" min="0" oninput="calcAparatos()">
+        </div>`).join('');
+}
+
+let ultimoAparatos = null;
+
+function calcAparatos() {
+    let totalM3hr=0, totalMJhr=0, activos=0;
+    let desg = '';
+    const det = {};
+
+    APARATOS.forEach(a=>{
+        const cant = parseInt(document.getElementById('a_'+a.id).value)||0;
+        if(cant>0){
+            const sub = cant * a.cons;
+            totalM3hr += sub; activos++;
+            desg += `<div style="font-size:12px;color:rgba(255,255,255,0.5);padding:3px 0">
+                <i class="fa ${a.icon}" style="color:#ffc400;margin-right:6px"></i>
+                ${a.name} x${cant} = <strong style="color:white">${sub.toFixed(3)} m³/hr</strong>
+            </div>`;
+            det[a.id] = cant;
+        }
+    });
+
+    totalMJhr = totalM3hr * 93.5;
+    const kghr = totalM3hr * 1.95;
+
+    document.getElementById('consumoTotal').innerHTML = totalM3hr.toFixed(3)+' <span style="font-size:22px">m³/hr</span>';
+    document.getElementById('consumoMJhr').textContent = totalMJhr.toFixed(1)+' MJ/hr';
+    document.getElementById('aparActivos').textContent = activos+' aparatos';
+    document.getElementById('kghr').textContent = kghr.toFixed(2)+' kg/hr';
+    document.getElementById('desgApart').innerHTML = desg || '<span style="font-size:12px;color:rgba(255,255,255,0.2)">Ingresa aparatos para ver el desglose</span>';
+
+    ultimoAparatos = { tipo:'aparatos', consumo_m3hr:totalM3hr.toFixed(3), consumo_mjhr:totalMJhr.toFixed(1), aparatos_activos:activos, detalle:JSON.stringify(det) };
+    document.getElementById('redConsumo').value = totalM3hr.toFixed(3);
+}
+
+function calcRed() {
+    const Q    = parseFloat(document.getElementById('redConsumo').value)||2.0;
+    const L    = parseFloat(document.getElementById('redLongitud').value)||25;
+    const pres = document.getElementById('redPresion').value;
+    const caida= parseFloat(document.getElementById('redCaida').value)/100;
+
+    const presKpa = pres==='baja'?2.8:pres==='media'?7:30;
+    const dp = presKpa * caida;
+    let d_calc = 15 * Math.pow(Q*L/(dp*presKpa+0.001), 0.2);
+
+    let diam='1/2"', d_real=12.7;
+    if(d_calc>12.7){diam='3/4"';   d_real=19;}
+    if(d_calc>19)  {diam='1"';     d_real=25;}
+    if(d_calc>25)  {diam='1 1/4"'; d_real=32;}
+    if(d_calc>32)  {diam='1 1/2"'; d_real=38;}
+    if(d_calc>38)  {diam='2"';     d_real=50;}
+    if(d_calc>50)  {diam='2 1/2"'; d_real=63;}
+
+    const vel = (Q/3600/(Math.PI*Math.pow(d_real/2000,2))).toFixed(2);
+    document.getElementById('redDiam').textContent = diam;
+    document.getElementById('redVel').textContent  = vel+' m/s';
+}
+
+function calcTanque() {
+    const consumoDia = parseFloat(document.getElementById('tanqConsumo').value)||20;
+    const dias       = parseInt(document.getElementById('tanqDias').value)||15;
+    const kt         = parseFloat(document.getElementById('tanqClima').value)||3.5;
+    const kp         = parseFloat(document.getElementById('tanqLlenado').value)||0.6;
+
+    const gasReq = consumoDia * dias;
+    const tanque = TANQUES.find(t=>(t*kp*0.505)>=gasReq) || 13000;
+
+    const tanqDims = {120:{D:0.48,L:0.78},180:{D:0.48,L:1.05},300:{D:0.61,L:1.12},500:{D:0.61,L:1.80},1000:{D:0.80,L:2.22},1600:{D:1.03,L:2.36},2200:{D:1.03,L:3.00},2800:{D:1.03,L:3.54},3400:{D:1.03,L:4.30},5000:{D:1.18,L:4.78},13000:{D:2.08,L:4.52}};
+    const dims = tanqDims[tanque]||{D:1.0,L:2.0};
+    const Qv = (0.01756*dims.D*dims.L*kp*kt).toFixed(3);
+    const ubicacion = tanque<=500?'Interior (seco)':tanque<=1600?'Exterior / Pedestal':'Pedestal exterior (obligatorio)';
+
+    document.getElementById('tanqCapacidad').innerHTML = tanque.toLocaleString()+' <span style="font-size:22px">Lt</span>';
+    document.getElementById('tanqModelo').textContent  = tanque+' L';
+    document.getElementById('tanqQv').textContent      = Qv+' kg/hr';
+    document.getElementById('tanqKg').textContent      = gasReq.toFixed(1)+' kg';
+    document.getElementById('tanqUbic').textContent    = ubicacion;
+}
+
+async function guardarAparatos() {
+    if(!ultimoAparatos) return;
+    const btn=document.getElementById('btnGAparat');
+    btn.disabled=true; btn.innerHTML='<i class="fa fa-spinner fa-spin"></i>';
+    try{
+        const res=await fetch(SB_URL+'/calculos_gas_lp',{method:'POST',headers:HEADERS,body:JSON.stringify(ultimoAparatos)});
+        if(!res.ok) throw new Error(await res.text());
+        document.getElementById('alertSuccessA').style.display='block';
+        setTimeout(()=>document.getElementById('alertSuccessA').style.display='none',3500);
+        cargarHistorial();
+    }catch(e){
+        console.error(e);
+        document.getElementById('alertErrorA').style.display='block';
+        setTimeout(()=>document.getElementById('alertErrorA').style.display='none',4000);
+    }
+    finally{btn.disabled=false; btn.innerHTML='<i class="fa fa-save"></i> Guardar';}
+}
+
+async function cargarHistorial() {
+    const div=document.getElementById('historial');
+    try{
+        const res=await fetch(SB_URL+'/calculos_gas_lp?order=created_at.desc&limit=10',{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+        const data=await res.json();
+        if(!Array.isArray(data)||!data.length){div.innerHTML='<div class="empty-state">No hay cálculos</div>';return;}
+        div.innerHTML=data.map(c=>`
+            <div class="hist-item">
+                <i class="fa fa-fire-flame-curved" style="color:#ffc400"></i>
+                <strong>${c.consumo_m3hr} m³/hr</strong> | ${c.consumo_mjhr} MJ/hr | ${c.aparatos_activos} aparatos
+            </div>`).join('');
+    }catch(e){div.innerHTML='<div class="empty-state">Error</div>';}
+}
+
+renderAparatos(); calcAparatos(); cargarHistorial();
+</script>
+</body>
+</html>

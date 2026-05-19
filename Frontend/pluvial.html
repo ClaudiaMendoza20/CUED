@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CUED - Cálculo Pluvial</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+.calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+.result-card{background:#0f1f38;border:1px solid rgba(100,180,255,0.15);border-radius:16px;padding:28px;text-align:center;}
+.result-big{font-family:'Rajdhani',sans-serif;font-size:60px;font-weight:700;color:#64b4ff;line-height:1;}
+.section-title{font-size:13px;font-weight:700;color:#64b4ff;letter-spacing:1px;text-transform:uppercase;margin:20px 0 12px;padding-bottom:8px;border-bottom:1px solid rgba(100,180,255,0.15);}
+.hist-scroll{max-height:200px;overflow-y:auto;}
+</style>
+</head>
+<body>
+<div id="sidebar-container"></div>
+
+<div class="main">
+    <div class="page-header">
+        <div class="page-title">
+            <h1><i class="fa fa-cloud-rain" style="color:#64b4ff;margin-right:10px"></i>Cálculo Pluvial</h1>
+            <p>Canalón, bajante pluvial y gasto — Método racional.</p>
+        </div>
+    </div>
+
+    <div class="calc-grid">
+        <div class="card">
+            <div class="section-title">Datos de la cubierta</div>
+
+            <label>Ancho de cubierta (m)</label>
+            <input id="ancho" type="number" value="10" min="0.1" step="0.1">
+
+            <label>Largo de cubierta (m)</label>
+            <input id="largo" type="number" value="58.6" min="0.1" step="0.1">
+
+            <label>Pendiente de cubierta (%)</label>
+            <input id="pendiente" type="number" value="0.5" min="0" step="0.1">
+
+            <label>Coeficiente de escurrimiento (C)</label>
+            <select id="coef">
+                <option value="1.0" selected>1.0 — Cubierta metálica / impermeable</option>
+                <option value="0.9">0.9 — Concreto</option>
+                <option value="0.85">0.85 — Asfalto</option>
+                <option value="0.6">0.6 — Jardines / vegetación</option>
+            </select>
+
+            <div class="section-title">Precipitación pluvial</div>
+
+            <label>Intensidad de lluvia (mm/hr)</label>
+            <select id="intensidad">
+                <option value="100">100 mm/hr — Baja</option>
+                <option value="150">150 mm/hr — Media</option>
+                <option value="175" selected>175 mm/hr — Tijuana / Ensenada</option>
+                <option value="200">200 mm/hr — Media-alta</option>
+                <option value="250">250 mm/hr — Alta</option>
+                <option value="300">300 mm/hr — Muy alta (tropical)</option>
+            </select>
+
+            <label>Intensidad personalizada (mm/hr)</label>
+            <input id="intensPersonal" type="number" placeholder="Dejar vacío para usar la anterior" min="1">
+
+            <div class="section-title">Canalón</div>
+
+            <label>Relación alto/ancho del canalón (m)</label>
+            <select id="relacion">
+                <option value="1.0">1.0</option>
+                <option value="1.2" selected>1.2</option>
+                <option value="1.25">1.25</option>
+            </select>
+
+            <label>Espaciamiento entre bajantes (m)</label>
+            <input id="espaciamiento" type="number" value="20" min="1">
+
+            <div style="margin-top:20px;display:flex;gap:12px;">
+                <button class="btn-primary" onclick="calcular()" style="flex:1">
+                    <i class="fa fa-calculator"></i> Calcular
+                </button>
+                <button class="btn-secondary" id="btnGuardar" onclick="guardar()">
+                    <i class="fa fa-save"></i> Guardar
+                </button>
+            </div>
+            <div id="alertSuccess" class="alert-success" style="margin-top:12px;display:none">
+                <i class="fa fa-circle-check"></i> Guardado en Supabase
+            </div>
+            <div id="alertError" class="alert-error" style="margin-top:12px;display:none">
+                <i class="fa fa-circle-xmark"></i> Error al guardar
+            </div>
+        </div>
+
+        <div>
+            <div class="result-card">
+                <div class="result-label">Gasto Pluvial Total</div>
+                <div class="result-big" id="gasto">— <span style="font-size:22px">m³/s</span></div>
+                <div style="color:rgba(100,180,255,0.5);font-size:13px;margin-top:6px" id="gastoLs">— L/s</div>
+
+                <div class="mini-cards" style="margin-top:20px">
+                    <div class="mini-card"><div class="mini-label">Área neta</div><div class="mini-val" id="areaNeta">— m²</div></div>
+                    <div class="mini-card"><div class="mini-label">Intensidad</div><div class="mini-val" id="intens">— mm/hr</div></div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top:20px">
+                <h3 style="font-size:14px;color:#64b4ff">
+                    <i class="fa fa-ruler-horizontal" style="margin-right:8px"></i>Dimensionamiento del Canalón
+                </h3>
+                <div class="mini-cards">
+                    <div class="mini-card"><div class="mini-label">Ancho canalón</div><div class="mini-val" id="anchoCan">—</div></div>
+                    <div class="mini-card"><div class="mini-label">Alto canalón</div><div class="mini-val" id="altoCan">—</div></div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top:20px">
+                <h3 style="font-size:14px;color:#64b4ff">
+                    <i class="fa fa-arrow-down" style="margin-right:8px"></i>Dimensionamiento de Bajante
+                </h3>
+                <div class="mini-cards">
+                    <div class="mini-card"><div class="mini-label">Área bajante</div><div class="mini-val" id="areaBajante">— in²</div></div>
+                    <div class="mini-card"><div class="mini-label">Dimensión</div><div class="mini-val" id="dimBajante">—</div></div>
+                    <div class="mini-card"><div class="mini-label">Calibre lámina</div><div class="mini-val" id="calibre">—</div></div>
+                </div>
+                <div id="recomendacion" style="margin-top:12px;padding:10px;background:rgba(100,180,255,0.06);border-radius:8px;font-size:12px;color:rgba(255,255,255,0.5)"></div>
+            </div>
+
+            <div class="card" style="margin-top:20px">
+                <h3><i class="fa fa-clock-rotate-left" style="color:#ffc400;margin-right:8px"></i>Historial</h3>
+                <div class="hist-scroll" id="historial"><div class="empty-state">Cargando...</div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="config.js"></script>
+<script src="sidebar.js"></script>
+<script>
+document.getElementById('sidebar-container').innerHTML = renderSidebar('pluvial');
+
+const SB_URL='https://tazheiutbleaexmcsopy.supabase.co/rest/v1';
+const SB_KEY='sb_publishable_i5hoZ9cKYlksVhpMcee_-Q_LQes-FOK';
+const HEADERS={'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=representation'};
+
+let ultimoCalculo = null;
+
+function calcular() {
+    const ancho       = parseFloat(document.getElementById('ancho').value)||10;
+    const largo       = parseFloat(document.getElementById('largo').value)||58.6;
+    const C           = parseFloat(document.getElementById('coef').value)||1.0;
+    const espaciamiento = parseFloat(document.getElementById('espaciamiento').value)||20;
+    const m           = parseFloat(document.getElementById('relacion').value)||1.2;
+    const personal    = parseFloat(document.getElementById('intensPersonal').value);
+    const I_mmhr      = personal > 0 ? personal : parseFloat(document.getElementById('intensidad').value)||175;
+
+    const areaNeta = ancho * largo;
+    const Q_m3s    = C * (I_mmhr/3600000) * areaNeta;
+    const Q_Ls     = Q_m3s * 1000;
+
+    const I_inhr = I_mmhr / 25.4;
+    const V_ft   = (ancho/2) * 3.28084;
+    const S_ft   = espaciamiento * 3.28084;
+    const Q_canal = V_ft * I_inhr * S_ft / 1200;
+
+    const W_in  = Math.pow(Q_canal, 5/14) * Math.pow(S_ft, 3/28) * Math.pow(m, -4/7);
+    const W_m   = W_in * 0.0254;
+    const H_in  = W_in * m;
+
+    let canalComercial = '';
+    if(W_in<=4)  canalComercial='4"x5"';
+    else if(W_in<=6)  canalComercial='6"x7.5"';
+    else if(W_in<=8)  canalComercial='8"x10"';
+    else if(W_in<=10) canalComercial='10"x12.5"';
+    else              canalComercial='12"x15"';
+
+    const A_bajante_in2 = S_ft * I_inhr * V_ft / 1200;
+    let bajDim='4"x4"', calibre='Cal. 24';
+    if(A_bajante_in2<=16)       {bajDim='4"x4"';   calibre='Cal. 24';}
+    else if(A_bajante_in2<=36)  {bajDim='6"x6"';   calibre='Cal. 22';}
+    else if(A_bajante_in2<=64)  {bajDim='8"x8"';   calibre='Cal. 22';}
+    else if(A_bajante_in2<=100) {bajDim='10"x10"';  calibre='Cal. 20';}
+    else                        {bajDim='12"x12"';  calibre='Cal. 20';}
+
+    document.getElementById('gasto').innerHTML     = Q_m3s.toFixed(5)+' <span style="font-size:22px">m³/s</span>';
+    document.getElementById('gastoLs').textContent  = Q_Ls.toFixed(3)+' L/s';
+    document.getElementById('areaNeta').textContent = areaNeta.toFixed(1)+' m²';
+    document.getElementById('intens').textContent   = I_mmhr+' mm/hr';
+    document.getElementById('anchoCan').textContent = W_in.toFixed(1)+'" ('+W_m.toFixed(2)+'m) — '+canalComercial;
+    document.getElementById('altoCan').textContent  = H_in.toFixed(1)+'" ('+(H_in*0.0254).toFixed(2)+'m)';
+    document.getElementById('areaBajante').textContent = A_bajante_in2.toFixed(1)+' in²';
+    document.getElementById('dimBajante').textContent  = bajDim;
+    document.getElementById('calibre').textContent     = calibre;
+    document.getElementById('recomendacion').innerHTML =
+        '<i class="fa fa-circle-check" style="color:#00ff99;margin-right:6px"></i>' +
+        `Recomendación: 1 bajante ${bajDim} cada ${espaciamiento}m | Canalón ${canalComercial} | ${calibre}`;
+
+    ultimoCalculo = { ancho, largo, intensidad_mmhr:I_mmhr, coef_escurrimiento:C, espaciamiento, gasto_m3s:Q_m3s.toFixed(6), gasto_ls:Q_Ls.toFixed(3), ancho_canalon_in:W_in.toFixed(1), bajante_dim:bajDim, calibre };
+}
+
+async function guardar() {
+    if(!ultimoCalculo) calcular();
+    const btn=document.getElementById('btnGuardar');
+    btn.disabled=true; btn.innerHTML='<i class="fa fa-spinner fa-spin"></i>';
+    try{
+        const res=await fetch(SB_URL+'/calculos_pluvial',{method:'POST',headers:HEADERS,body:JSON.stringify(ultimoCalculo)});
+        if(!res.ok) throw new Error(await res.text());
+        mostrarAlerta('success'); cargarHistorial();
+    }catch(e){console.error(e); mostrarAlerta('error');}
+    finally{btn.disabled=false; btn.innerHTML='<i class="fa fa-save"></i> Guardar';}
+}
+
+async function cargarHistorial() {
+    const div=document.getElementById('historial');
+    try{
+        const res=await fetch(SB_URL+'/calculos_pluvial?order=created_at.desc&limit=10',{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+        const data=await res.json();
+        if(!Array.isArray(data)||!data.length){div.innerHTML='<div class="empty-state">No hay cálculos</div>';return;}
+        div.innerHTML=data.map(c=>`
+            <div class="hist-item">
+                <i class="fa fa-cloud-rain" style="color:#64b4ff"></i>
+                <strong>${c.ancho}x${c.largo}m</strong> /
+                ${c.intensidad_mmhr}mm/hr / C=${c.coef_escurrimiento}
+                → Q=${c.gasto_ls} L/s | Bajante ${c.bajante_dim}
+            </div>`).join('');
+    }catch(e){div.innerHTML='<div class="empty-state">Error</div>';}
+}
+
+function mostrarAlerta(t){
+    const s=document.getElementById('alertSuccess'),e=document.getElementById('alertError');
+    s.style.display='none'; e.style.display='none';
+    if(t==='success'){s.style.display='block';setTimeout(()=>s.style.display='none',3500);}
+    else{e.style.display='block';setTimeout(()=>e.style.display='none',4000);}
+}
+
+['ancho','largo','pendiente','coef','espaciamiento','relacion','intensidad','intensPersonal'].forEach(id=>{
+    const el=document.getElementById(id);
+    el.addEventListener('change',calcular);
+    el.addEventListener('input',calcular);
+});
+calcular(); cargarHistorial();
+</script>
+</body>
+</html>

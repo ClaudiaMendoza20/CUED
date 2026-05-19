@@ -40,6 +40,7 @@ async function apiFetch(endpoint, options = {}) {
     });
     return res.json();
 }
+// TODO EL ARCHIVO — es corto y muy importante
 
 // Verificar sesión - si no hay login, redirigir
 function checkAuth() {

@@ -2,7 +2,7 @@
 // CUED SOLUTIONS - server.js con .env seguro
 // =============================================
 
-require('dotenv').config(); // 🔐 Carga las variables del .env
+require('dotenv').config(); //  Carga las variables del .env
 
 const express = require('express');
 const cors = require('cors');
@@ -13,19 +13,19 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// 🔐 Variables desde .env (nunca hardcodeadas)
+//  Variables desde .env (nunca hardcodeadas)
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_KEY;
 const JWT_SECRET   = process.env.JWT_SECRET;
 const PORT         = process.env.PORT || 3000;
 
 if (!SUPABASE_URL || !SUPABASE_KEY) {
-  console.error('❌ Faltan variables de entorno. Revisa tu archivo .env');
+  console.error(' Faltan variables de entorno. Revisa tu archivo .env');
   process.exit(1);
 }
 
 // =============================================
-// HELPER: fetch a Supabase REST API
+// Funcion HELPER de Supabase
 // =============================================
 async function supabase(tabla, options = {}) {
   const { method = 'GET', body, query = '', single = false } = options;
@@ -70,7 +70,7 @@ function authMiddleware(req, res, next) {
 // =============================================
 
 app.get('/', (req, res) => {
-  res.json({ status: '🚀 CUED Solutions API funcionando' });
+  res.json({ status: 'CUED Solutions API funcionando' });
 });
 
 // LOGIN
@@ -318,6 +318,6 @@ app.get('/api/cotizaciones', authMiddleware, async (req, res) => {
 // ARRANCAR SERVIDOR
 // =============================================
 app.listen(PORT, () => {
-  console.log(`🚀 CUED Solutions API corriendo en http://localhost:${PORT}`);
-  console.log(`📡 Conectado a Supabase: ${SUPABASE_URL}`);
+  console.log(`CUED Solutions API corriendo en http://localhost:${PORT}`);
+  console.log(`Conectado a Supabase: ${SUPABASE_URL}`);
 });

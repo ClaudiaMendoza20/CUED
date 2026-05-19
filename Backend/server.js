@@ -109,4 +109,4 @@ app.post('/api/cotizacion', async (req, res) => {
   res.json({ success: true });
 });
 
-app.listen(3000, () => console.log('🚀 Servidor CUED en http://localhost:3000'));
+app.listen(3000, () => console.log('Servidor CUED en http://localhost:3000'));

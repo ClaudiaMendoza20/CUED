@@ -33,7 +33,7 @@
 <div class="main">
     <div class="page-header">
         <div class="page-title">
-            <h1>👥 Gestión de Usuarios</h1>
+            <h1>Gestión de Usuarios</h1>
             <p>Administra los accesos y roles del personal técnico.</p>
         </div>
         <button class="btn-primary" onclick="abrirModal()"><i class="fa fa-plus"></i>Nuevo Usuario</button>
@@ -43,7 +43,7 @@
     <div id="alertError" class="alert-error">❌ Error al crear usuario</div>
 
     <div class="warning-note">
-        ⚠️ <strong>Nota de seguridad:</strong> Para crear usuarios con contraseña segura, el backend debe estar corriendo 
+        <strong>Nota de seguridad:</strong> Para crear usuarios con contraseña segura, el backend debe estar corriendo 
         (<code>node server.js</code>) y hashear la contraseña con bcrypt. En modo demo, se guarda sin hash.
     </div>
 
@@ -142,7 +142,7 @@ async function crearUsuario() {
                 cerrarModal();
                 cargarUsuarios();
                 const s = document.getElementById('alertSuccess');
-                s.textContent = '✅ Usuario creado correctamente via backend.';
+                s.textContent = 'Usuario creado correctamente via backend.';
                 s.style.display = 'block';
                 setTimeout(()=>s.style.display='none', 4000);
                 return;

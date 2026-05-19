@@ -294,9 +294,10 @@ async function login() {
             console.warn('Backend no disponible, usando modo demo');
             // Para modo demo, acepta usuario "admin" con cualquier contraseña
             // EN PRODUCCIÓN: siempre usar el backend
-            valid = (username === 'admin' && password === '123456') ||
-                    (username === 'admin' && password.length > 0);
-        }
+           // Comparación directa (modo demo sin backend)
+        valid = (password === user.password);
+
+            }
 
         if(!valid) {
             showError('Contraseña incorrecta');

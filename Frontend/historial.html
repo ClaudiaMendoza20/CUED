@@ -29,7 +29,7 @@ body{
 <body>
 
 <div class="container">
-    <h2>📊 Historial de Cálculos</h2>
+    <h2>Historial de Cálculos</h2>
 
     <div id="lista"></div>
 
@@ -37,7 +37,7 @@ body{
 </div>
 
 <script>
-// 🔐 PROTEGER
+//  PROTEGER
 if(localStorage.getItem("login") !== "true"){
     window.location="login.html";
 }
@@ -57,9 +57,9 @@ async function cargar(){
     data.forEach(c=>{
         lista.innerHTML += `
             <div class="item">
-                ⚡ Potencia: ${c.power} W <br>
-                🔌 Voltaje: ${c.voltage} V <br>
-                🔥 Corriente: ${c.current.toFixed(2)} A
+                Potencia: ${c.power} W <br>
+                Voltaje: ${c.voltage} V <br>
+                Corriente: ${c.current.toFixed(2)} A
             </div>
         `;
     });

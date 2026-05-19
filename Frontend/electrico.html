@@ -7,20 +7,8 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
 .calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
-.result-card{
-    background:#0f1f38;
-    border:1px solid rgba(0,212,255,0.15);
-    border-radius:16px;
-    padding:28px;
-    text-align:center;
-}
-.result-big{
-    font-family:'Rajdhani',sans-serif;
-    font-size:72px;
-    font-weight:700;
-    color:#5fa8ff;
-    line-height:1;
-}
+.result-card{background:#0f1f38;border:1px solid rgba(0,212,255,0.15);border-radius:16px;padding:28px;text-align:center;}
+.result-big{font-family:'Rajdhani',sans-serif;font-size:72px;font-weight:700;color:#5fa8ff;line-height:1;}
 .result-unit{font-size:22px;color:rgba(95,168,255,0.6);}
 .hist-scroll{max-height:260px;overflow-y:auto;}
 .hist-scroll::-webkit-scrollbar{width:4px;}
@@ -33,14 +21,12 @@
 <div class="main">
     <div class="page-header">
         <div class="page-title">
-            <h1>⚡ Cálculos Eléctricos</h1>
+            <h1><i class="fa fa-bolt" style="color:#ffc400;margin-right:10px"></i>Cálculos Eléctricos</h1>
             <p>Dimensionamiento de alimentadores y protecciones.</p>
         </div>
     </div>
 
     <div class="calc-grid">
-
-        <!-- PARÁMETROS -->
         <div class="card">
             <h3>Parámetros de Diseño</h3>
 
@@ -77,14 +63,13 @@
             </div>
 
             <div id="alertSuccess" class="alert-success" style="margin-top:12px;display:none">
-                ✅ Guardado correctamente en Supabase
+                <i class="fa fa-circle-check"></i> Guardado correctamente en Supabase
             </div>
             <div id="alertError" class="alert-error" style="margin-top:12px;display:none">
-                ❌ Error al guardar — revisa consola (F12)
+                <i class="fa fa-circle-xmark"></i> Error al guardar — revisa consola (F12)
             </div>
         </div>
 
-        <!-- RESULTADO -->
         <div class="result-card">
             <div class="result-label">Corriente de Diseño</div>
             <div class="result-big" id="corriente">
@@ -106,27 +91,21 @@
                 </div>
             </div>
         </div>
-
     </div>
 
-    <!-- HISTORIAL -->
     <div class="card" style="margin-top:24px">
         <h3>Historial de Cálculos</h3>
         <div class="hist-scroll" id="historial">
             <div class="empty-state">Cargando historial...</div>
         </div>
     </div>
-
 </div>
 
 <script src="config.js"></script>
 <script src="sidebar.js"></script>
 <script>
-
-// Sidebar
 document.getElementById('sidebar-container').innerHTML = renderSidebar('electrico');
 
-// Keys de Supabase directas para evitar cualquier problema con config.js
 const SB_URL = 'https://tazheiutbleaexmcsopy.supabase.co/rest/v1';
 const SB_KEY = 'sb_publishable_i5hoZ9cKYlksVhpMcee_-Q_LQes-FOK';
 const SB_HEADERS = {
@@ -138,7 +117,6 @@ const SB_HEADERS = {
 
 let ultimoCalculo = null;
 
-// ─── CALCULAR ────────────────────────────────────────────────
 function calcular() {
     const carga   = parseFloat(document.getElementById('carga').value);
     const voltaje = parseFloat(document.getElementById('voltaje').value);
@@ -147,13 +125,9 @@ function calcular() {
 
     if (!carga || carga <= 0) return;
 
-    // Fórmula eléctrica
-    let I = fases === 1
-        ? carga / voltaje
-        : carga / (voltaje * Math.sqrt(3));
+    let I = fases === 1 ? carga / voltaje : carga / (voltaje * Math.sqrt(3));
     I = I * factor;
 
-    // Calibre AWG — NOM-001-SEDE-2012
     let awg = '14 AWG';
     if (I > 15)  awg = '12 AWG';
     if (I > 20)  awg = '10 AWG';
@@ -166,47 +140,27 @@ function calcular() {
     if (I > 150) awg = '3/0 AWG';
     if (I > 200) awg = '4/0 AWG';
 
-    // Breaker NEMA estándar
     const breakerStd = [15,20,25,30,40,50,60,70,80,90,100,125,150,175,200,225,250,300,350,400];
     const breakerVal = breakerStd.find(b => b >= I) || 400;
     const breakerStr = '1x' + breakerVal + 'A';
 
-    // Conduit EMT
     let conduit = '3/4"';
     if (I > 30)  conduit = '1"';
     if (I > 60)  conduit = '1 1/4"';
     if (I > 100) conduit = '1 1/2"';
     if (I > 150) conduit = '2"';
 
-    // Mostrar resultados
-    document.getElementById('corriente').innerHTML =
-        I.toFixed(2) + '<span class="result-unit"> A</span>';
+    document.getElementById('corriente').innerHTML = I.toFixed(2) + '<span class="result-unit"> A</span>';
     document.getElementById('awg').textContent     = awg;
     document.getElementById('breaker').textContent = breakerStr;
     document.getElementById('conduit').textContent = conduit;
 
-    // Objeto listo para Supabase — nombres exactos de columnas
-    ultimoCalculo = {
-        carga:     carga,
-        voltaje:   voltaje,
-        fases:     fases,
-        factor:    factor,
-        corriente: I.toFixed(2),
-        awg:       awg,
-        breaker:   breakerStr,
-        conduit:   conduit
-    };
+    ultimoCalculo = { carga, voltaje, fases, factor, corriente: I.toFixed(2), awg, breaker: breakerStr, conduit };
 }
 
-// ─── GUARDAR EN SUPABASE ─────────────────────────────────────
 async function guardar() {
-    if (!ultimoCalculo) {
-        calcular();
-    }
-    if (!ultimoCalculo) {
-        alert('Primero realiza un cálculo');
-        return;
-    }
+    if (!ultimoCalculo) { calcular(); }
+    if (!ultimoCalculo) { alert('Primero realiza un cálculo'); return; }
 
     const btn = document.getElementById('btnGuardar');
     btn.disabled = true;
@@ -214,23 +168,11 @@ async function guardar() {
 
     try {
         const res = await fetch(SB_URL + '/calculos_electricos', {
-            method:  'POST',
-            headers: SB_HEADERS,
-            body:    JSON.stringify(ultimoCalculo)
+            method: 'POST', headers: SB_HEADERS, body: JSON.stringify(ultimoCalculo)
         });
-
-        if (!res.ok) {
-            const txt = await res.text();
-            console.error('❌ Supabase respondió:', res.status, txt);
-            throw new Error('Status ' + res.status + ': ' + txt);
-        }
-
-        const saved = await res.json();
-        console.log('✅ Guardado en Supabase:', saved);
-
+        if (!res.ok) { const txt = await res.text(); throw new Error('Status ' + res.status + ': ' + txt); }
         mostrarAlerta('success');
         cargarHistorial();
-
     } catch (err) {
         console.error('Error guardar electrico:', err);
         mostrarAlerta('error');
@@ -240,65 +182,47 @@ async function guardar() {
     }
 }
 
-// ─── HISTORIAL ───────────────────────────────────────────────
 async function cargarHistorial() {
     const div = document.getElementById('historial');
     try {
-        const res = await fetch(
-            SB_URL + '/calculos_electricos?order=created_at.desc&limit=15',
-            { headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY } }
-        );
-
+        const res = await fetch(SB_URL + '/calculos_electricos?order=created_at.desc&limit=15',
+            { headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY } });
         if (!res.ok) throw new Error('Error ' + res.status);
         const data = await res.json();
-
         if (!Array.isArray(data) || !data.length) {
             div.innerHTML = '<div class="empty-state">No hay cálculos guardados aún</div>';
             return;
         }
-
         div.innerHTML = data.map(c => `
             <div class="hist-item">
-                ⚡ <strong>${c.carga} W</strong> /
+                <i class="fa fa-bolt" style="color:#ffc400"></i>
+                <strong>${c.carga} W</strong> /
                 ${c.voltaje} V /
                 ${parseInt(c.fases) === 1 ? 'Monofásico' : 'Trifásico'} /
                 FD: ${c.factor} →
                 <strong>${c.corriente} A</strong> |
                 ${c.awg} | ${c.breaker} | Conduit ${c.conduit}
-            </div>
-        `).join('');
-
+            </div>`).join('');
     } catch (err) {
-        console.error('Error historial:', err);
         div.innerHTML = '<div class="empty-state">Error al cargar historial</div>';
     }
 }
 
-// ─── HELPER ALERTAS ──────────────────────────────────────────
 function mostrarAlerta(tipo) {
     const s = document.getElementById('alertSuccess');
     const e = document.getElementById('alertError');
-    s.style.display = 'none';
-    e.style.display = 'none';
-    if (tipo === 'success') {
-        s.style.display = 'block';
-        setTimeout(() => { s.style.display = 'none'; }, 3500);
-    } else {
-        e.style.display = 'block';
-        setTimeout(() => { e.style.display = 'none'; }, 4000);
-    }
+    s.style.display = 'none'; e.style.display = 'none';
+    if (tipo === 'success') { s.style.display = 'block'; setTimeout(() => s.style.display = 'none', 3500); }
+    else { e.style.display = 'block'; setTimeout(() => e.style.display = 'none', 4000); }
 }
 
-// ─── EVENTOS ────────────────────────────────────────────────
 ['carga', 'voltaje', 'fases', 'factor'].forEach(id => {
     document.getElementById(id).addEventListener('change', calcular);
     document.getElementById(id).addEventListener('input',  calcular);
 });
 
-// ─── INICIO ──────────────────────────────────────────────────
 calcular();
 cargarHistorial();
-
 </script>
 </body>
 </html>

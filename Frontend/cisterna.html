@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CUED - Cisterna</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+.main-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+.result-card{background:#0f1f38;border:1px solid rgba(0,212,255,0.15);border-radius:16px;padding:28px;text-align:center;}
+.result-big{font-family:'Rajdhani',sans-serif;font-size:64px;font-weight:700;color:#00d4ff;line-height:1;}
+.usos-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;}
+.uso-row{display:flex;align-items:center;gap:10px;padding:10px;background:rgba(255,255,255,0.03);border-radius:8px;}
+.uso-row label{font-size:12px;color:rgba(255,255,255,0.5);flex:1;margin:0;}
+.uso-row input{width:80px;padding:6px 10px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:6px;color:white;font-size:13px;text-align:center;}
+.uso-row input:focus{outline:none;border-color:rgba(0,212,255,0.4);}
+.hist-scroll{max-height:200px;overflow-y:auto;}
+</style>
+</head>
+<body>
+<div id="sidebar-container"></div>
+
+<div class="main">
+    <div class="page-header">
+        <div class="page-title">
+            <h1><i class="fa fa-database" style="color:#00d4ff;margin-right:10px"></i>Cálculo de Cisterna</h1>
+            <p>Dotaciones por tipo de uso — NOM-002-CNA y CONAGUA.</p>
+        </div>
+    </div>
+
+    <div class="main-grid">
+        <div class="card">
+            <h3>Dotaciones por Tipo de Uso</h3>
+            <p style="font-size:12px;color:rgba(255,255,255,0.3);margin-bottom:16px">Ingresa la cantidad de unidades para cada tipo de uso aplicable al proyecto.</p>
+
+            <div class="usos-grid">
+                <div class="uso-row"><label>Departamento (220 L/p/día)</label><input type="number" id="u_depto" value="0" min="0" placeholder="personas"></div>
+                <div class="uso-row"><label>Residencia c/alberca (500 L/p/día)</label><input type="number" id="u_resid" value="0" min="0" placeholder="personas"></div>
+                <div class="uso-row"><label>Oficinas (20 L/m²/día)</label><input type="number" id="u_ofic" value="0" min="0" placeholder="m²"></div>
+                <div class="uso-row"><label>Hotel c/servicios (220 L/huésped)</label><input type="number" id="u_hotel" value="0" min="0" placeholder="huéspedes"></div>
+                <div class="uso-row"><label>Hospital básico (200 L/cama)</label><input type="number" id="u_hosp" value="0" min="0" placeholder="camas"></div>
+                <div class="uso-row"><label>Escuela (50 L/alumno/día)</label><input type="number" id="u_escuela" value="0" min="0" placeholder="alumnos"></div>
+                <div class="uso-row"><label>Fábrica (60 L/obrero/día)</label><input type="number" id="u_fabrica" value="0" min="0" placeholder="obreros"></div>
+                <div class="uso-row"><label>Gimnasio (300 L/socio/día)</label><input type="number" id="u_gym" value="0" min="0" placeholder="socios"></div>
+                <div class="uso-row"><label>Local comercial (6 L/m²/día)</label><input type="number" id="u_local" value="0" min="0" placeholder="m²"></div>
+                <div class="uso-row"><label>Restaurante lujo (30 L/comensal)</label><input type="number" id="u_rest" value="0" min="0" placeholder="comensales"></div>
+                <div class="uso-row"><label>Área verde (5 L/m²/día)</label><input type="number" id="u_verde" value="0" min="0" placeholder="m²"></div>
+                <div class="uso-row"><label>SCI - Rociadores (500 GPM × min)</label><input type="number" id="u_sci" value="0" min="0" placeholder="minutos"></div>
+            </div>
+
+            <label style="margin-top:20px">Días de almacenamiento</label>
+            <select id="dias">
+                <option value="1">1 día</option>
+                <option value="2">2 días</option>
+                <option value="3" selected>3 días (recomendado)</option>
+                <option value="7">7 días (máximo)</option>
+            </select>
+
+            <div style="margin-top:20px;display:flex;gap:12px;">
+                <button class="btn-primary" onclick="calcular()" style="flex:1">
+                    <i class="fa fa-calculator"></i> Calcular
+                </button>
+                <button class="btn-secondary" id="btnGuardar" onclick="guardar()">
+                    <i class="fa fa-save"></i> Guardar
+                </button>
+            </div>
+            <div id="alertSuccess" class="alert-success" style="margin-top:12px;display:none">
+                <i class="fa fa-circle-check"></i> Guardado en Supabase
+            </div>
+            <div id="alertError" class="alert-error" style="margin-top:12px;display:none">
+                <i class="fa fa-circle-xmark"></i> Error al guardar
+            </div>
+        </div>
+
+        <div>
+            <div class="result-card">
+                <div class="result-label">Capacidad de Cisterna</div>
+                <div class="result-big" id="volumen">— <span style="font-size:24px">m³</span></div>
+                <div style="color:rgba(0,212,255,0.5);font-size:13px;margin-top:6px" id="litros">— litros</div>
+
+                <div class="mini-cards" style="margin-top:24px">
+                    <div class="mini-card">
+                        <div class="mini-label">Dotación 1 día</div>
+                        <div class="mini-val" id="dot1">— m³</div>
+                    </div>
+                    <div class="mini-card">
+                        <div class="mini-label">Dotación 7 días</div>
+                        <div class="mini-val" id="dot7">— m³</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top:20px">
+                <h3 style="font-size:14px">
+                    <i class="fa fa-list" style="color:#00d4ff;margin-right:8px"></i>Desglose por uso
+                </h3>
+                <div id="desglose" style="font-size:12px;color:rgba(255,255,255,0.5);line-height:2"></div>
+            </div>
+
+            <div class="card" style="margin-top:20px">
+                <h3><i class="fa fa-clock-rotate-left" style="color:#ffc400;margin-right:8px"></i>Historial</h3>
+                <div class="hist-scroll" id="historial"><div class="empty-state">Cargando...</div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="config.js"></script>
+<script src="sidebar.js"></script>
+<script>
+document.getElementById('sidebar-container').innerHTML = renderSidebar('cisterna');
+
+const SB_URL='https://tazheiutbleaexmcsopy.supabase.co/rest/v1';
+const SB_KEY='sb_publishable_i5hoZ9cKYlksVhpMcee_-Q_LQes-FOK';
+const HEADERS={'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=representation'};
+
+const USOS = [
+    {id:'u_depto',   label:'Departamento',        dot:220,     unit:'personas'},
+    {id:'u_resid',   label:'Residencia c/alberca', dot:500,     unit:'personas'},
+    {id:'u_ofic',    label:'Oficinas',             dot:20,      unit:'m²'},
+    {id:'u_hotel',   label:'Hotel',                dot:220,     unit:'huéspedes'},
+    {id:'u_hosp',    label:'Hospital',             dot:200,     unit:'camas'},
+    {id:'u_escuela', label:'Escuela',              dot:50,      unit:'alumnos'},
+    {id:'u_fabrica', label:'Fábrica',              dot:60,      unit:'obreros'},
+    {id:'u_gym',     label:'Gimnasio',             dot:300,     unit:'socios'},
+    {id:'u_local',   label:'Local comercial',      dot:6,       unit:'m²'},
+    {id:'u_rest',    label:'Restaurante',          dot:30,      unit:'comensales'},
+    {id:'u_verde',   label:'Área verde',           dot:5,       unit:'m²'},
+    {id:'u_sci',     label:'SCI (rociadores)',     dot:1892.71, unit:'minutos'},
+];
+
+let ultimoCalculo = null;
+
+function calcular() {
+    const dias = parseInt(document.getElementById('dias').value);
+    let totalLtDia = 0;
+    let desglose = '';
+    const detalle = {};
+
+    USOS.forEach(u => {
+        const cant = parseFloat(document.getElementById(u.id).value)||0;
+        if(cant > 0) {
+            const lt = cant * u.dot;
+            totalLtDia += lt;
+            desglose += `<div>
+                <i class="fa fa-chevron-right" style="color:#ffc400;font-size:10px;margin-right:4px"></i>
+                ${u.label}: ${cant} ${u.unit} x ${u.dot} L =
+                <strong style="color:white">${lt.toLocaleString()} L/día</strong>
+            </div>`;
+            detalle[u.id] = cant;
+        }
+    });
+
+    if(totalLtDia === 0){
+        document.getElementById('volumen').innerHTML='0 <span style="font-size:24px">m³</span>';
+        document.getElementById('litros').textContent='Ingresa al menos un uso';
+        document.getElementById('desglose').innerHTML='<div style="color:rgba(255,255,255,0.2)">Ingresa cantidades para ver el desglose</div>';
+        return;
+    }
+
+    const totalM3 = (totalLtDia * dias / 1000).toFixed(2);
+    const dot1    = (totalLtDia / 1000).toFixed(2);
+    const dot7    = (totalLtDia * 7 / 1000).toFixed(2);
+
+    document.getElementById('volumen').innerHTML = totalM3 + ' <span style="font-size:24px">m³</span>';
+    document.getElementById('litros').textContent = (totalLtDia * dias).toLocaleString() + ' litros';
+    document.getElementById('dot1').textContent   = dot1 + ' m³';
+    document.getElementById('dot7').textContent   = dot7 + ' m³';
+    document.getElementById('desglose').innerHTML = desglose;
+
+    ultimoCalculo = { dotacion_total_lt: totalLtDia, dias_almacenamiento: dias, volumen_m3: parseFloat(totalM3), detalle: JSON.stringify(detalle) };
+}
+
+async function guardar() {
+    if(!ultimoCalculo){calcular();}
+    if(!ultimoCalculo || ultimoCalculo.dotacion_total_lt === 0) return;
+    const btn = document.getElementById('btnGuardar');
+    btn.disabled = true; btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i>';
+    try {
+        const res = await fetch(SB_URL+'/calculos_cisterna',{method:'POST',headers:HEADERS,body:JSON.stringify(ultimoCalculo)});
+        if(!res.ok) throw new Error(await res.text());
+        mostrarAlerta('success'); cargarHistorial();
+    } catch(e){console.error(e); mostrarAlerta('error');}
+    finally{btn.disabled=false; btn.innerHTML='<i class="fa fa-save"></i> Guardar';}
+}
+
+async function cargarHistorial() {
+    const div = document.getElementById('historial');
+    try {
+        const res = await fetch(SB_URL+'/calculos_cisterna?order=created_at.desc&limit=10',{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+        const data = await res.json();
+        if(!Array.isArray(data)||!data.length){div.innerHTML='<div class="empty-state">No hay cálculos guardados</div>';return;}
+        div.innerHTML = data.map(c=>`
+            <div class="hist-item">
+                <i class="fa fa-droplet" style="color:#00d4ff"></i>
+                Dotación: ${(c.dotacion_total_lt||0).toLocaleString()} L/día
+                x ${c.dias_almacenamiento} días
+                → <strong>${c.volumen_m3} m³</strong>
+            </div>`).join('');
+    } catch(e){div.innerHTML='<div class="empty-state">Error al cargar</div>';}
+}
+
+function mostrarAlerta(t){
+    const s=document.getElementById('alertSuccess'),e=document.getElementById('alertError');
+    s.style.display='none'; e.style.display='none';
+    if(t==='success'){s.style.display='block';setTimeout(()=>s.style.display='none',3500);}
+    else{e.style.display='block';setTimeout(()=>e.style.display='none',4000);}
+}
+
+USOS.forEach(u => document.getElementById(u.id).addEventListener('input', calcular));
+document.getElementById('dias').addEventListener('change', calcular);
+calcular(); cargarHistorial();
+</script>
+</body>
+</html>

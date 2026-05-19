@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CUED - Caída de Tensión</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+.calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+.result-card{background:#0f1f38;border:1px solid rgba(255,196,0,0.2);border-radius:16px;padding:28px;text-align:center;}
+.result-big{font-family:'Rajdhani',sans-serif;font-size:72px;font-weight:700;line-height:1;}
+.ok{color:#00ff99;} .warn{color:#ffc400;} .bad{color:#ff4444;}
+.tag{display:inline-block;padding:6px 18px;border-radius:99px;font-size:13px;font-weight:700;margin-top:12px;letter-spacing:1px;}
+.tag-ok{background:rgba(0,255,153,0.1);color:#00ff99;border:1px solid rgba(0,255,153,0.3);}
+.tag-warn{background:rgba(255,196,0,0.1);color:#ffc400;border:1px solid rgba(255,196,0,0.3);}
+.tag-bad{background:rgba(255,68,68,0.1);color:#ff4444;border:1px solid rgba(255,68,68,0.3);}
+.hist-scroll{max-height:240px;overflow-y:auto;}
+.info-box{background:rgba(255,196,0,0.05);border:1px solid rgba(255,196,0,0.1);border-radius:10px;padding:14px;font-size:12px;color:rgba(255,255,255,0.5);line-height:1.7;margin-top:16px;}
+</style>
+</head>
+<body>
+<div id="sidebar-container"></div>
+
+<div class="main">
+    <div class="page-header">
+        <div class="page-title">
+            <h1><i class="fa fa-arrow-trend-down" style="color:#ffc400;margin-right:10px"></i>Caída de Tensión</h1>
+            <p>Cálculo de e% según NOM-001-SEDE-2012 y NEC.</p>
+        </div>
+    </div>
+
+    <div class="calc-grid">
+        <div class="card">
+            <h3>Parámetros del Circuito</h3>
+
+            <label>Calibre del conductor</label>
+            <select id="calibre">
+                <option value="12">12 AWG</option>
+                <option value="10">10 AWG</option>
+                <option value="8">8 AWG</option>
+                <option value="6">6 AWG</option>
+                <option value="4">4 AWG</option>
+                <option value="3">3 AWG</option>
+                <option value="2" selected>2 AWG</option>
+                <option value="1">1 AWG</option>
+                <option value="1/0">1/0 AWG</option>
+                <option value="2/0">2/0 AWG</option>
+                <option value="3/0">3/0 AWG</option>
+                <option value="4/0">4/0 AWG</option>
+                <option value="250">250 kcmil</option>
+                <option value="300">300 kcmil</option>
+                <option value="350">350 kcmil</option>
+                <option value="400">400 kcmil</option>
+                <option value="500">500 kcmil</option>
+            </select>
+
+            <label>Longitud del circuito (m)</label>
+            <input id="longitud" type="number" value="100" min="1">
+
+            <label>Tensión del sistema (V)</label>
+            <select id="tension">
+                <option value="127">127 V</option>
+                <option value="220" selected>220 V</option>
+                <option value="440">440 V</option>
+                <option value="480">480 V</option>
+            </select>
+
+            <label>Número de polos</label>
+            <select id="polos">
+                <option value="1">1 polo (Monofásico)</option>
+                <option value="2">2 polos (Bifásico)</option>
+                <option value="3" selected>3 polos (Trifásico)</option>
+            </select>
+
+            <label>Neutro</label>
+            <select id="neutro">
+                <option value="1">Con neutro</option>
+                <option value="0">Sin neutro</option>
+            </select>
+
+            <label>Material del conductor</label>
+            <select id="material">
+                <option value="pvc" selected>PVC / Cobre</option>
+                <option value="acero">Acero</option>
+            </select>
+
+            <label>Carga (VA)</label>
+            <input id="va" type="number" value="5000" min="1">
+
+            <div style="margin-top:24px;display:flex;gap:12px;">
+                <button class="btn-primary" onclick="calcular()" style="flex:1">
+                    <i class="fa fa-calculator"></i> Calcular
+                </button>
+                <button class="btn-secondary" id="btnGuardar" onclick="guardar()">
+                    <i class="fa fa-save"></i> Guardar
+                </button>
+            </div>
+            <div id="alertSuccess" class="alert-success" style="margin-top:12px;display:none">
+                <i class="fa fa-circle-check"></i> Guardado en Supabase
+            </div>
+            <div id="alertError" class="alert-error" style="margin-top:12px;display:none">
+                <i class="fa fa-circle-xmark"></i> Error al guardar
+            </div>
+        </div>
+
+        <div class="result-card">
+            <div class="result-label">Caída de Tensión</div>
+            <div class="result-big" id="epct">—<span style="font-size:32px"> %</span></div>
+            <div id="tagEstado" class="tag tag-ok" style="display:none"></div>
+
+            <div class="mini-cards" style="margin-top:28px">
+                <div class="mini-card">
+                    <div class="mini-label">Corriente (A)</div>
+                    <div class="mini-val" id="corriente">—</div>
+                </div>
+                <div class="mini-card">
+                    <div class="mini-label">Conductores</div>
+                    <div class="mini-val" id="numConductores">—</div>
+                </div>
+                <div class="mini-card">
+                    <div class="mini-label">DV (Voltios)</div>
+                    <div class="mini-val" id="deltaV">—</div>
+                </div>
+            </div>
+
+            <div class="info-box">
+                NOM-001-SEDE: máximo 3% para circuitos derivados, 5% total (alimentador + derivado). NEC: mismo criterio.<br>
+                <i class="fa fa-circle-check" style="color:#00ff99"></i> Verde = Cumple &nbsp;|&nbsp;
+                <i class="fa fa-triangle-exclamation" style="color:#ffc400"></i> Amarillo = Límite &nbsp;|&nbsp;
+                <i class="fa fa-circle-xmark" style="color:#ff4444"></i> Rojo = No cumple
+            </div>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top:24px">
+        <h3>Historial de Cálculos</h3>
+        <div class="hist-scroll" id="historial">
+            <div class="empty-state">Cargando historial...</div>
+        </div>
+    </div>
+</div>
+
+<script src="config.js"></script>
+<script src="sidebar.js"></script>
+<script>
+document.getElementById('sidebar-container').innerHTML = renderSidebar('caida');
+
+const SB_URL = 'https://tazheiutbleaexmcsopy.supabase.co/rest/v1';
+const SB_KEY = 'sb_publishable_i5hoZ9cKYlksVhpMcee_-Q_LQes-FOK';
+const HEADERS = { 'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=representation' };
+
+const Z_TABLE = {
+    pvc:  {'12':6.0,'10':3.77,'8':2.37,'6':1.5,'4':0.98,'3':0.81,'2':0.63,'1':0.55,'1/0':0.42,'2/0':0.36,'3/0':0.29,'4/0':0.24,'250':0.21,'300':0.19,'350':0.17,'400':0.15,'500':0.14},
+    acero:{'12':6.0,'10':3.77,'8':2.37,'6':1.5,'4':1.0,'3':0.82,'2':0.67,'1':0.55,'1/0':0.43,'2/0':0.37,'3/0':0.31,'4/0':0.26,'250':0.23,'300':0.21,'350':0.19,'400':0.17,'500':0.15}
+};
+
+let ultimoCalculo = null;
+
+function calcular() {
+    const calibre  = document.getElementById('calibre').value;
+    const longitud = parseFloat(document.getElementById('longitud').value);
+    const tension  = parseFloat(document.getElementById('tension').value);
+    const polos    = parseInt(document.getElementById('polos').value);
+    const neutro   = parseInt(document.getElementById('neutro').value);
+    const mat      = document.getElementById('material').value;
+    const va       = parseFloat(document.getElementById('va').value);
+
+    if(!longitud || !va) return;
+
+    const Z = Z_TABLE[mat][calibre] || 0.63;
+    const numCond = polos + neutro;
+
+    let I;
+    if(polos === 1) I = va / tension;
+    else if(polos === 2) I = va / (tension * 2);
+    else I = va / (tension * Math.sqrt(3));
+
+    const factorPolos = polos === 3 ? Math.sqrt(3) : 2;
+    const Lkm = longitud / 1000;
+    const deltaV = Z * Lkm * I * factorPolos;
+    const epct = (deltaV / tension) * 100;
+
+    let estado, cls, tagCls;
+    if(epct <= 3)      { estado = 'CUMPLE NOM';  cls = 'ok';   tagCls = 'tag-ok'; }
+    else if(epct <= 5) { estado = 'LIMITE';       cls = 'warn'; tagCls = 'tag-warn'; }
+    else               { estado = 'NO CUMPLE';    cls = 'bad';  tagCls = 'tag-bad'; }
+
+    document.getElementById('epct').innerHTML = epct.toFixed(2) + '<span style="font-size:32px"> %</span>';
+    document.getElementById('epct').className = 'result-big ' + cls;
+    const tag = document.getElementById('tagEstado');
+    tag.textContent = estado;
+    tag.className = 'tag ' + tagCls;
+    tag.style.display = 'inline-block';
+    document.getElementById('corriente').textContent = I.toFixed(2) + ' A';
+    document.getElementById('numConductores').textContent = numCond + ' cond.';
+    document.getElementById('deltaV').textContent = deltaV.toFixed(2) + ' V';
+
+    ultimoCalculo = { calibre, longitud, tension, polos, neutro, material: mat, va, corriente: I.toFixed(2), delta_v: deltaV.toFixed(2), epct: epct.toFixed(2), estado };
+}
+
+async function guardar() {
+    if(!ultimoCalculo) { calcular(); }
+    if(!ultimoCalculo) return;
+    const btn = document.getElementById('btnGuardar');
+    btn.disabled = true; btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i>';
+    try {
+        const res = await fetch(SB_URL + '/calculos_caida_tension', { method:'POST', headers:HEADERS, body:JSON.stringify(ultimoCalculo) });
+        if(!res.ok) throw new Error(await res.text());
+        mostrarAlerta('success'); cargarHistorial();
+    } catch(e) { console.error(e); mostrarAlerta('error'); }
+    finally { btn.disabled=false; btn.innerHTML='<i class="fa fa-save"></i> Guardar'; }
+}
+
+async function cargarHistorial() {
+    const div = document.getElementById('historial');
+    try {
+        const res = await fetch(SB_URL+'/calculos_caida_tension?order=created_at.desc&limit=15', { headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY} });
+        const data = await res.json();
+        if(!Array.isArray(data)||!data.length) { div.innerHTML='<div class="empty-state">No hay cálculos guardados aún</div>'; return; }
+        div.innerHTML = data.map(c=>`
+            <div class="hist-item">
+                <i class="fa fa-bolt" style="color:#ffc400"></i>
+                <strong>#${c.calibre} AWG</strong> / ${c.longitud}m / ${c.tension}V / ${c.polos}P
+                → <strong>${c.epct}%</strong> DV=${c.delta_v}V | ${c.estado}
+            </div>`).join('');
+    } catch(e) { div.innerHTML='<div class="empty-state">Error al cargar historial</div>'; }
+}
+
+function mostrarAlerta(tipo) {
+    const s=document.getElementById('alertSuccess'), e=document.getElementById('alertError');
+    s.style.display='none'; e.style.display='none';
+    if(tipo==='success'){s.style.display='block';setTimeout(()=>s.style.display='none',3500);}
+    else{e.style.display='block';setTimeout(()=>e.style.display='none',4000);}
+}
+
+['calibre','longitud','tension','polos','neutro','material','va'].forEach(id=>{
+    document.getElementById(id).addEventListener('change',calcular);
+    document.getElementById(id).addEventListener('input',calcular);
+});
+calcular(); cargarHistorial();
+</script>
+</body>
+</html>
