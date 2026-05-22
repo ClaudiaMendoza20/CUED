@@ -1,134 +1,162 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>CUED - HVAC</title>
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
-.calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
-.result-card{background:#0f1f38;border:1px solid rgba(255,196,0,0.15);border-radius:16px;padding:28px;text-align:center;}
-.result-big{font-family:'Rajdhani',sans-serif;font-size:72px;font-weight:700;color:#ffc400;line-height:1;}
-.result-unit{font-size:22px;color:rgba(255,196,0,0.5);}
-.hist-scroll{max-height:220px;overflow-y:auto;}
+.cg{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.rc{background:#0f1f38;border:1px solid rgba(255,196,0,.18);border-radius:13px;padding:26px;text-align:center;}
+.rb{font-family:'Rajdhani',sans-serif;font-size:66px;font-weight:700;color:#ffc400;line-height:1;}
+.hi{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:7px;font-size:12px;border-bottom:1px solid var(--border);}
+.hi:last-child{border:none;}.hi:hover{background:rgba(255,255,255,.03);}
+.hi-del{opacity:0;transition:opacity .15s;margin-left:auto;flex-shrink:0;}
+.hi:hover .hi-del{opacity:1;}
 </style>
 </head>
 <body>
 <div id="sidebar-container"></div>
 <div class="main">
-    <div class="page-header">
-        <div class="page-title">
-            <h1><i class="fa fa-fan" style="color:#ffc400;margin-right:10px"></i>Cálculos HVAC</h1>
-            <p>Estimación de carga térmica y selección de equipos.</p>
-        </div>
+  <div class="ph">
+    <div class="ph-left">
+      <h1><i class="fa fa-fan" style="color:var(--gold);margin-right:8px"></i>Cálculos HVAC</h1>
+      <p>Estimación de carga térmica y selección de equipo de climatización.</p>
     </div>
-    <div class="calc-grid">
-        <div class="card">
-            <h3>Condiciones del Local</h3>
-            <label>Área del Local (m²)</label>
-            <input id="area" type="number" value="50" placeholder="m²">
-            <label>Ocupación (Personas)</label>
-            <input id="personas" type="number" value="4" placeholder="Número de personas">
-            <label>Número de Ventanas</label>
-            <input id="ventanas" type="number" value="2" placeholder="Ventanas exteriores">
-            <label>Orientación Solar</label>
-            <select id="orientacion">
-                <option value="1.0">Norte (baja exposición)</option>
-                <option value="1.15" selected>Este/Oeste (media)</option>
-                <option value="1.3">Sur (alta exposición)</option>
-            </select>
-            <label>Piso del edificio</label>
-            <select id="piso">
-                <option value="1.0" selected>Planta baja / intermedio</option>
-                <option value="1.15">Último piso (techo expuesto)</option>
-            </select>
-            <div style="margin-top:24px;display:flex;gap:12px;">
-                <button class="btn-primary" onclick="calcular()" style="flex:1">
-                    <i class="fa fa-calculator"></i> Calcular
-                </button>
-                <button class="btn-secondary" onclick="guardar()">
-                    <i class="fa fa-save"></i> Guardar
-                </button>
-            </div>
-            <div id="alertSuccess" class="alert-success" style="margin-top:12px">
-                <i class="fa fa-circle-check"></i> Guardado en Supabase
-            </div>
-            <div id="alertError" class="alert-error" style="margin-top:12px">
-                <i class="fa fa-circle-xmark"></i> Error al guardar
-            </div>
-        </div>
-        <div class="result-card">
-            <div class="result-label">Capacidad Requerida</div>
-            <div class="result-big" id="tons">—<span class="result-unit"> TON</span></div>
-            <div class="mini-cards" style="margin-top:28px">
-                <div class="mini-card"><div class="mini-label">BTU/hr</div><div class="mini-val" id="btu">—</div></div>
-                <div class="mini-card"><div class="mini-label">Consumo Est.</div><div class="mini-val" id="kw">—</div></div>
-                <div class="mini-card"><div class="mini-label">Equipo Sugerido</div><div class="mini-val" id="equipo">—</div></div>
-            </div>
-        </div>
+    <div class="ph-right">
+      <button class="btn btn-d" onclick="limpiar()"><i class="fa fa-eraser"></i> Limpiar todo</button>
     </div>
+  </div>
+  <div class="cg">
     <div class="card">
-        <h3>Historial de Cálculos</h3>
-        <div class="hist-scroll" id="historial"><div class="empty-state">Cargando historial...</div></div>
+      <div class="card-t"><i class="fa fa-sliders"></i> Condiciones del local</div>
+      <span class="flabel">Área del local (m²)</span>
+      <input id="area" type="number" value="50" min="1" placeholder="m²">
+      <span class="flabel">Número de personas</span>
+      <input id="personas" type="number" value="4" min="0" placeholder="personas">
+      <span class="flabel">Número de ventanas exteriores</span>
+      <input id="ventanas" type="number" value="2" min="0" placeholder="ventanas">
+      <span class="flabel">Orientación solar dominante</span>
+      <select id="orientacion">
+        <option value="1.0">Norte — baja exposición solar</option>
+        <option value="1.15" selected>Este / Oeste — media exposición</option>
+        <option value="1.3">Sur — alta exposición solar</option>
+      </select>
+      <span class="flabel">Piso del edificio</span>
+      <select id="piso">
+        <option value="1.0" selected>Planta baja o nivel intermedio</option>
+        <option value="1.15">Último piso — techo expuesto al sol</option>
+      </select>
+      <span class="flabel">Tipo de uso del local</span>
+      <select id="uso">
+        <option value="1.0" selected>Oficina / Residencial</option>
+        <option value="1.2">Comercial / Tienda</option>
+        <option value="1.4">Restaurante / Cocina</option>
+        <option value="0.8">Bodega / Almacén</option>
+      </select>
+      <div style="display:flex;gap:9px;margin-top:18px">
+        <button class="btn btn-p" onclick="calcular()" style="flex:1"><i class="fa fa-calculator"></i> Calcular</button>
+        <button class="btn btn-s" id="btnG" onclick="guardar()"><i class="fa fa-save"></i> Guardar</button>
+      </div>
+      <div id="aok" class="a-ok" style="margin-top:10px"><i class="fa fa-circle-check"></i> Guardado en Supabase</div>
+      <div id="aerr" class="a-err" style="margin-top:10px"><i class="fa fa-circle-xmark"></i> Error al guardar</div>
     </div>
+    <div class="rc">
+      <div class="rl">Capacidad Requerida</div>
+      <div class="rb" id="tons">—<span style="font-size:22px;opacity:.5"> TR</span></div>
+      <div class="mc-grid" style="margin-top:22px">
+        <div class="mc"><div class="mc-l">BTU/hr</div><div class="mc-v" id="btu">—</div></div>
+        <div class="mc"><div class="mc-l">Consumo est.</div><div class="mc-v" id="kw">—</div></div>
+        <div class="mc"><div class="mc-l">Equipo sugerido</div><div class="mc-v" id="equipo" style="font-size:13px">—</div></div>
+        <div class="mc"><div class="mc-l">Unidades</div><div class="mc-v" id="unidades">—</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:18px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div class="card-t" style="margin:0"><i class="fa fa-clock-rotate-left"></i> Historial</div>
+      <button class="btn btn-d" style="padding:6px 12px;font-size:12px" onclick="borrarTodo()"><i class="fa fa-trash"></i> Borrar todo</button>
+    </div>
+    <div class="hs" id="hist"><div class="empty">Cargando historial...</div></div>
+  </div>
 </div>
 <script src="config.js"></script>
 <script src="sidebar.js"></script>
 <script>
-document.getElementById('sidebar-container').innerHTML = renderSidebar('hvac');
-let ultimoCalculo = null;
-function calcular() {
-    const area=parseFloat(document.getElementById('area').value);
-    const personas=parseInt(document.getElementById('personas').value)||0;
-    const ventanas=parseInt(document.getElementById('ventanas').value)||0;
-    const orientacion=parseFloat(document.getElementById('orientacion').value);
-    const piso=parseFloat(document.getElementById('piso').value);
-    if(!area||area<=0) return;
-    const btuTotal=((area*600)+(personas*600)+(ventanas*1200))*orientacion*piso;
-    const tons=(btuTotal/12000).toFixed(2);
-    const kw=(btuTotal/3412).toFixed(1);
-    let equipo='Mini-split 1TR';
-    const t=parseFloat(tons);
-    if(t>1.5) equipo='Mini-split 2TR'; if(t>3) equipo='Cassette 4TR';
-    if(t>5)   equipo='Fan Coil 5TR';   if(t>10) equipo='Roof Top '+Math.ceil(t)+'TR';
-    document.getElementById('tons').innerHTML=tons+'<span class="result-unit"> TON</span>';
-    document.getElementById('btu').textContent=Math.round(btuTotal).toLocaleString();
-    document.getElementById('kw').textContent=kw+' kW';
-    document.getElementById('equipo').textContent=equipo;
-    ultimoCalculo={area,personas,tons:parseFloat(tons),btu:Math.round(btuTotal),consumo_kw:parseFloat(kw)};
+initSidebar('hvac');
+const TABLA='calculos_hvac';
+let uc=null;
+function calcular(){
+  const area=parseFloat(document.getElementById('area').value);
+  const personas=parseInt(document.getElementById('personas').value)||0;
+  const ventanas=parseInt(document.getElementById('ventanas').value)||0;
+  const orientacion=parseFloat(document.getElementById('orientacion').value);
+  const piso=parseFloat(document.getElementById('piso').value);
+  const uso=parseFloat(document.getElementById('uso').value);
+  if(!area||area<=0)return;
+  // BTU = (area×600 + personas×600 + ventanas×1200) × factores
+  const btuTotal=((area*600)+(personas*600)+(ventanas*1200))*orientacion*piso*uso;
+  const tons=btuTotal/12000;
+  const kw=btuTotal/3412;
+  let equipo='Mini-split 1TR';let unidades=1;
+  const t=tons;
+  if(t<=1.5){equipo='Mini-split 1.5TR';unidades=1;}
+  else if(t<=2){equipo='Mini-split 2TR';unidades=1;}
+  else if(t<=4){equipo='Cassette/Ducto 4TR';unidades=1;}
+  else if(t<=5){equipo='Fan Coil 5TR';unidades=1;}
+  else if(t<=10){equipo='Roof Top';unidades=1;}
+  else{equipo='Chiller central';unidades=Math.ceil(t/10);}
+  document.getElementById('tons').innerHTML=tons.toFixed(2)+'<span style="font-size:22px;opacity:.5"> TR</span>';
+  document.getElementById('btu').textContent=Math.round(btuTotal).toLocaleString();
+  document.getElementById('kw').textContent=kw.toFixed(1)+' kW';
+  document.getElementById('equipo').textContent=equipo;
+  document.getElementById('unidades').textContent=unidades+' equipo'+(unidades>1?'s':'');
+  const p=getProyecto();
+  uc={area,personas,tons:parseFloat(tons.toFixed(2)),btu:Math.round(btuTotal),consumo_kw:parseFloat(kw.toFixed(1)),proyecto_id:p?.id||null};
 }
-async function guardar() {
-    if(!ultimoCalculo) calcular();
-    if(!ultimoCalculo) return;
-    try {
-        await sbFetch('calculos_hvac',{method:'POST',body:ultimoCalculo});
-        const s=document.getElementById('alertSuccess');
-        s.style.display='block'; setTimeout(()=>s.style.display='none',3000);
-        cargarHistorial();
-    } catch(err) {
-        const e=document.getElementById('alertError');
-        e.style.display='block'; setTimeout(()=>e.style.display='none',3000);
-    }
+function limpiar(){
+  document.getElementById('area').value=50;document.getElementById('personas').value=4;
+  document.getElementById('ventanas').value=2;document.getElementById('orientacion').selectedIndex=1;
+  document.getElementById('piso').selectedIndex=0;document.getElementById('uso').selectedIndex=0;
+  document.getElementById('tons').innerHTML='—<span style="font-size:22px;opacity:.5"> TR</span>';
+  ['btu','kw','equipo','unidades'].forEach(id=>document.getElementById(id).textContent='—');
+  uc=null;toast('Formulario limpiado');
 }
-async function cargarHistorial() {
-    try {
-        const data=await sbFetch('calculos_hvac',{query:'?order=created_at.desc&limit=10'});
-        const div=document.getElementById('historial');
-        if(!data.length){div.innerHTML='<div class="empty-state">No hay cálculos guardados aún</div>';return;}
-        div.innerHTML=data.map(c=>`<div class="hist-item">
-            <i class="fa fa-fan" style="color:#ffc400"></i>
-            <strong>${c.area} m²</strong> / ${c.personas} personas
-            → ${c.tons} TR | ${c.btu?.toLocaleString()} BTU | ${c.consumo_kw} kW
-        </div>`).join('');
-    } catch(err) {
-        document.getElementById('historial').innerHTML='<div class="empty-state">Error al cargar historial</div>';
-    }
+async function guardar(){
+  if(!uc){calcular();}if(!uc)return;
+  const btn=document.getElementById('btnG');btn.disabled=true;btn.innerHTML='<i class="fa fa-spinner fa-spin"></i>';
+  try{await sbFetch(TABLA,{method:'POST',body:uc});toast('Guardado');showA('aok');cargarHist();}
+  catch(e){toast('Error','err');showA('aerr');}
+  finally{btn.disabled=false;btn.innerHTML='<i class="fa fa-save"></i> Guardar';}
 }
-['area','personas','ventanas','orientacion','piso'].forEach(id=>{
-    document.getElementById(id).addEventListener('change',calcular);
-    document.getElementById(id).addEventListener('input',calcular);
+async function borrarUno(id){
+  if(!confirmar('¿Eliminar?'))return;
+  try{await sbDel(TABLA,`?id=eq.${id}`);toast('Eliminado');cargarHist();}catch(e){toast('Error','err');}
+}
+async function borrarTodo(){
+  if(!confirmar('¿Borrar TODO el historial HVAC?'))return;
+  try{await fetch(`${SB_URL}/${TABLA}?id=neq.00000000-0000-0000-0000-000000000000`,{method:'DELETE',headers:SB_H});toast('Eliminado');cargarHist();}catch(e){toast('Error','err');}
+}
+async function cargarHist(){
+  const div=document.getElementById('hist');
+  try{
+    const p=getProyecto();
+    const q=p?.id?`?proyecto_id=eq.${p.id}&order=created_at.desc&limit=30`:'?order=created_at.desc&limit=30';
+    const d=await sbFetch(TABLA,{query:q});
+    if(!d.length){div.innerHTML='<div class="empty">No hay cálculos guardados</div>';return;}
+    div.innerHTML=d.map(c=>`<div class="hi">
+      <i class="fa fa-fan" style="color:var(--gold);flex-shrink:0"></i>
+      <span style="flex:1"><b>${c.area} m²</b> / ${c.personas} pers. → <b>${c.tons} TR</b> | ${(c.btu||0).toLocaleString()} BTU | ${c.consumo_kw} kW</span>
+      <span style="font-size:10px;color:var(--dim);flex-shrink:0;margin:0 8px">${c.created_at?new Date(c.created_at).toLocaleString('es-MX',{dateStyle:'short',timeStyle:'short'}):''}</span>
+      <button class="bic del hi-del" onclick="borrarUno('${c.id}')"><i class="fa fa-trash"></i></button>
+    </div>`).join('');
+  }catch(e){div.innerHTML='<div class="empty">Error</div>';}
+}
+['area','personas','ventanas','orientacion','piso','uso'].forEach(id=>{
+  document.getElementById(id).addEventListener('change',calcular);
+  document.getElementById(id).addEventListener('input',calcular);
 });
-calcular(); cargarHistorial();
+calcular();cargarHist();
 </script>
 </body>
 </html>

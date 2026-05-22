@@ -1,60 +1,53 @@
-// =============================================
-// CUED SOLUTIONS - Configuración Global
-// =============================================
+const SB_URL = 'https://tazheiutbleaexmcsopy.supabase.co/rest/v1';
+const SB_KEY = 'sb_publishable_i5hoZ9cKYlksVhpMcee_-Q_LQes-FOK';
+const SB_H   = { 'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY };
 
-const SUPABASE_URL = 'https://tazheiutbleaexmcsopy.supabase.co/rest/v1';
-const SUPABASE_KEY = 'sb_publishable_i5hoZ9cKYlksVhpMcee_-Q_LQes-FOK';
-const API_URL = 'http://localhost:3000';
-
-// Helper para llamadas a Supabase directamente desde el frontend
-async function sbFetch(tabla, options = {}) {
-    const { method = 'GET', body, query = '' } = options;
-    const res = await fetch(`${SUPABASE_URL}/${tabla}${query}`, {
+async function sbFetch(tabla, opts={}) {
+    const { method='GET', body, query='' } = opts;
+    const r = await fetch(`${SB_URL}/${tabla}${query}`, {
         method,
-        headers: {
-            'Content-Type': 'application/json',
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
-            'Prefer': method === 'POST' ? 'return=representation' : ''
-        },
+        headers: { ...SB_H, 'Prefer': method==='POST'?'return=representation':'' },
         body: body ? JSON.stringify(body) : undefined
     });
-    if (!res.ok) {
-        const err = await res.text();
-        throw new Error(err);
-    }
-    return res.json();
+    if (!r.ok) { const e=await r.text(); throw new Error(e); }
+    return r.json();
 }
-
-// Helper para llamadas al backend (con token JWT)
-async function apiFetch(endpoint, options = {}) {
-    const token = localStorage.getItem('token');
-    const { method = 'GET', body } = options;
-    const res = await fetch(`${API_URL}${endpoint}`, {
-        method,
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        },
-        body: body ? JSON.stringify(body) : undefined
+async function sbDel(tabla, query) {
+    const r = await fetch(`${SB_URL}/${tabla}${query}`, { method:'DELETE', headers:SB_H });
+    if (!r.ok) { const e=await r.text(); throw new Error(e); }
+}
+async function sbPatch(tabla, query, body) {
+    const r = await fetch(`${SB_URL}/${tabla}${query}`, {
+        method:'PATCH', headers:SB_H, body:JSON.stringify(body)
     });
-    return res.json();
+    if (!r.ok) { const e=await r.text(); throw new Error(e); }
 }
-// TODO EL ARCHIVO — es corto y muy importante
 
-// Verificar sesión - si no hay login, redirigir
 function checkAuth() {
-    const user = localStorage.getItem('cued_user');
-    if (!user) {
-        window.location.href = 'login.html';
-        return null;
-    }
-    return JSON.parse(user);
+    const u = localStorage.getItem('cued_user');
+    if (!u) { window.location.href='login.html'; return null; }
+    return JSON.parse(u);
 }
-
-// Logout
 function logout() {
     localStorage.removeItem('cued_user');
-    localStorage.removeItem('token');
+    sessionStorage.removeItem('proy_activo');
     window.location.href = 'login.html';
+}
+function toast(msg, tipo='ok') {
+    document.querySelector('.toast-n')?.remove();
+    const el = document.createElement('div');
+    el.className = `toast-n ${tipo}`;
+    el.innerHTML = `<i class="fa fa-${tipo==='ok'?'circle-check':'circle-xmark'}"></i>${msg}`;
+    document.body.appendChild(el);
+    setTimeout(()=>{ el.style.opacity='0'; el.style.transition='.3s'; setTimeout(()=>el.remove(),300); }, 2600);
+}
+function confirmar(msg) { return confirm(msg); }
+function getProyecto()  { const p=sessionStorage.getItem('proy_activo'); return p?JSON.parse(p):null; }
+function setProyecto(p) { sessionStorage.setItem('proy_activo', JSON.stringify(p)); }
+
+// Helper: muestra/oculta alerta inline
+function showA(id) {
+    const el = document.getElementById(id); if(!el) return;
+    el.style.display='block';
+    setTimeout(()=>el.style.display='none', 3200);
 }

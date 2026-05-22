@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CUED - Proyecto</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+.step-flow{display:flex;gap:8px;align-items:center;margin-bottom:24px;flex-wrap:wrap;}
+.step{display:flex;align-items:center;gap:9px;padding:12px 16px;background:var(--card);border:1px solid var(--border);border-radius:10px;text-decoration:none;color:white;transition:all .2s;flex:1;min-width:160px;}
+.step:hover{border-color:rgba(255,196,0,.3);background:rgba(255,196,0,.04);}
+.step .sn{width:28px;height:28px;border-radius:50%;background:rgba(255,196,0,.15);color:var(--gold);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Rajdhani',sans-serif;}
+.step .st{font-size:12px;color:var(--dim);}
+.step .sl{font-size:13px;font-weight:600;}
+.step.activo .sn{background:var(--gold);color:var(--dark);}
+.step .sarr{margin-left:auto;color:var(--dim);font-size:11px;}
+</style>
+</head>
+<body>
+<div id="sidebar-container"></div>
+<div class="main">
+  <div id="ph"></div>
+  <div id="steps-section"></div>
+  <div id="mods-section"></div>
+</div>
+
+<script src="config.js"></script>
+<script src="sidebar.js"></script>
+<script>
+const proy = getProyecto();
+if (!proy) { window.location.href='proyectos.html'; }
+
+initSidebar('detalle');
+
+const MODS_MAP = {
+  electrico: {icon:'fa-bolt',              label:'Eléctrico',     desc:'AWG, breaker, conduit NOM-001',   href:'electrico.html'},
+  caida:     {icon:'fa-arrow-trend-down',  label:'Caída Tensión', desc:'e% NOM/NEC',                      href:'caida_tension.html'},
+  motores:   {icon:'fa-gear',              label:'Motores',       desc:'Corriente NEC 430.250',           href:'motores.html'},
+  cuadros:   {icon:'fa-table',             label:'Cuadros Carga', desc:'Factor demanda dinámico',         href:'cuadro_carga.html'},
+  hidraulico:{icon:'fa-droplet',           label:'Hidráulico',    desc:'Hazen-Williams, bomba',           href:'hidraulico.html'},
+  cisterna:  {icon:'fa-database',          label:'Cisterna',      desc:'Dotaciones NOM-002-CNA',          href:'cisterna.html'},
+  sanitario: {icon:'fa-toilet',            label:'Sanitario',     desc:'Unidades Mueble, bajantes',       href:'sanitario.html'},
+  pluvial:   {icon:'fa-cloud-rain',        label:'Pluvial',       desc:'Q = CIA, canalón, bajante',       href:'pluvial.html'},
+  gas:       {icon:'fa-wind',              label:'Gas / Aire',    desc:'LP / Natural / Aire industrial',  href:'gas.html'},
+  gas_lp:    {icon:'fa-fire-flame-curved', label:'Gas LP',        desc:'Aparatos, red, tanque',           href:'gas_lp.html'},
+  hvac:      {icon:'fa-fan',               label:'HVAC',          desc:'TR / BTU / kW',                  href:'hvac.html'},
+  incendios: {icon:'fa-fire',              label:'Incendios',     desc:'Rociadores NFPA 13',              href:'incendios.html'},
+};
+
+const mods = JSON.parse(proy.modulos||'[]');
+
+document.getElementById('ph').innerHTML = `
+  <div class="ph">
+    <div class="ph-left">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+        <a href="proyectos.html" style="color:var(--dim);text-decoration:none;font-size:12px"><i class="fa fa-arrow-left"></i> Proyectos</a>
+        <span style="color:var(--dim);font-size:12px">/</span>
+        <span style="color:var(--gold);font-size:12px">${proy.nombre}</span>
+      </div>
+      <h1><i class="fa fa-folder-open" style="color:var(--gold);margin-right:9px"></i>${proy.nombre}</h1>
+      <div style="display:flex;gap:14px;margin-top:5px;flex-wrap:wrap">
+        ${proy.cliente_nombre?`<span style="font-size:12px;color:var(--dim)"><i class="fa fa-user" style="margin-right:5px;color:var(--gold)"></i>${proy.cliente_nombre}</span>`:''}
+        <span class="badge ${proy.status==='activo'?'b-ok':proy.status==='pausado'?'b-w':'b-off'}">${proy.status||'activo'}</span>
+        ${proy.descripcion?`<span style="font-size:12px;color:var(--dim)">${proy.descripcion}</span>`:''}
+      </div>
+    </div>
+    <div class="ph-right">
+      <a href="cotizacion.html" class="btn btn-p"><i class="fa fa-file-invoice-dollar"></i> Ir a Cotización</a>
+    </div>
+  </div>`;
+
+// Flujo visual 1-2-3
+document.getElementById('steps-section').innerHTML = `
+  <div class="step-flow">
+    <div class="step activo">
+      <div class="sn">1</div>
+      <div><div class="st">Paso actual</div><div class="sl">Cálculos del proyecto</div></div>
+    </div>
+    <i class="fa fa-arrow-right" style="color:var(--dim);font-size:12px"></i>
+    <a href="cotizacion.html" class="step">
+      <div class="sn">2</div>
+      <div><div class="st">Siguiente</div><div class="sl">Cotización</div></div>
+      <i class="fa fa-arrow-right sarr"></i>
+    </a>
+    <i class="fa fa-arrow-right" style="color:var(--dim);font-size:12px"></i>
+    <div class="step">
+      <div class="sn">3</div>
+      <div><div class="st">Final</div><div class="sl">PDF / Entrega</div></div>
+    </div>
+  </div>`;
+
+if(!mods.length){
+  document.getElementById('mods-section').innerHTML=`
+    <div class="card" style="text-align:center;padding:48px">
+      <i class="fa fa-puzzle-piece" style="font-size:40px;color:rgba(255,255,255,.07);margin-bottom:14px"></i>
+      <h3 style="color:rgba(255,255,255,.3);margin-bottom:10px">Sin módulos asignados</h3>
+      <p style="color:var(--dim);font-size:13px;margin-bottom:18px">Edita el proyecto y selecciona los módulos de cálculo a usar.</p>
+      <a href="proyectos.html" class="btn btn-s"><i class="fa fa-pen"></i> Editar proyecto</a>
+    </div>`;
+}else{
+  document.getElementById('mods-section').innerHTML=`
+    <div class="card">
+      <div class="card-t"><i class="fa fa-calculator"></i> Módulos de cálculo (${mods.length}) — Clic para calcular</div>
+      <div class="mod-grid">
+        ${mods.map(k=>{
+          const m=MODS_MAP[k]; if(!m) return '';
+          return`<a class="mod-card" href="${m.href}">
+            <i class="fa ${m.icon} mi"></i>
+            <span class="mn">${m.label}</span>
+            <span class="md">${m.desc}</span>
+          </a>`;
+        }).join('')}
+        <a class="mod-card" href="cotizacion.html" style="border-color:rgba(255,196,0,.2);background:rgba(255,196,0,.03)">
+          <i class="fa fa-file-invoice-dollar mi" style="color:var(--gold)"></i>
+          <span class="mn">Cotización / PDF</span>
+          <span class="md">Genera la cotización final</span>
+        </a>
+      </div>
+    </div>`;
+}
+</script>
+</body>
+</html>

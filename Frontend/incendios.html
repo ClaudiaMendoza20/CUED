@@ -1,191 +1,214 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CUED - Contra Incendios</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CUED - Incendios</title>
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
-.main-grid{display:grid;grid-template-columns:340px 1fr;gap:24px;}
-canvas{background:#020c1a;border-radius:12px;display:block;width:100%;height:auto;}
-.resumen p{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:13px;color:rgba(255,255,255,0.6);}
-.resumen p:last-child{border:none;}
-.resumen strong{color:white;}
+.cg{display:grid;grid-template-columns:340px 1fr;gap:20px;}
+canvas{background:#020c1a;border-radius:12px;display:block;width:100%;height:auto;border:1px solid var(--border);}
+.res-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.res-row:last-child{border:none;}
+.res-row b{color:var(--gold);}
+.hi{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:7px;font-size:12px;border-bottom:1px solid var(--border);}
+.hi:last-child{border:none;}.hi:hover{background:rgba(255,255,255,.03);}
+.hi-del{opacity:0;transition:opacity .15s;margin-left:auto;flex-shrink:0;}
+.hi:hover .hi-del{opacity:1;}
 </style>
 </head>
 <body>
 <div id="sidebar-container"></div>
-
 <div class="main">
-    <div class="page-header">
-        <div class="page-title">
-            <h1><i class="fa fa-fire" style="color:#ff6b6b;margin-right:10px"></i>Sistema Contra Incendios</h1>
-            <p>Diseño automático de red de rociadores — NFPA 13.</p>
-        </div>
-        <div style="display:flex;gap:12px">
-            <button class="btn-secondary" onclick="guardar()">
-                <i class="fa fa-save"></i> Guardar
-            </button>
-        </div>
+  <div class="ph">
+    <div class="ph-left">
+      <h1><i class="fa fa-fire" style="color:var(--gold);margin-right:8px"></i>Sistema Contra Incendios</h1>
+      <p>Diseño de red de rociadores — NFPA 13. Vista en planta automática.</p>
     </div>
-
-    <div id="alertSuccess" class="alert-success">
-        <i class="fa fa-circle-check"></i> Guardado en Supabase
+    <div class="ph-right">
+      <button class="btn btn-d" onclick="limpiar()"><i class="fa fa-eraser"></i> Limpiar todo</button>
+      <button class="btn btn-s" id="btnG" onclick="guardar()"><i class="fa fa-save"></i> Guardar</button>
     </div>
-    <div id="alertError" class="alert-error">
-        <i class="fa fa-circle-xmark"></i> Error al guardar
-    </div>
-
-    <div class="main-grid">
-        <div>
-            <div class="card">
-                <h3><i class="fa fa-sliders" style="color:#ffc400;margin-right:8px"></i>Parámetros del Área</h3>
-
-                <label>Ancho (m)</label>
-                <input id="ancho" type="number" value="20">
-
-                <label>Largo (m)</label>
-                <input id="largo" type="number" value="20">
-
-                <label>Espaciado S entre rociadores (m)</label>
-                <input id="espS" type="number" value="4">
-
-                <label>Espaciado R entre ramales (m)</label>
-                <input id="espR" type="number" value="4">
-
-                <label>Tipo de Rociador</label>
-                <select id="tipoRoc">
-                    <option value="estandar">Estándar (k=5.6)</option>
-                    <option value="respuesta_rapida">Respuesta Rápida (k=5.6)</option>
-                    <option value="gran_gota">Gran Gota (k=11.2)</option>
-                </select>
-
-                <button class="btn-primary" onclick="calcular()" style="margin-top:20px;width:100%">
-                    <i class="fa fa-calculator"></i> Calcular Sistema
-                </button>
-            </div>
-
-            <div class="card resumen" id="resumenCard" style="display:none">
-                <h3><i class="fa fa-list-check" style="color:#ffc400;margin-right:8px"></i>Resumen de Materiales</h3>
-                <p>Rociadores: <strong id="rRes">—</strong></p>
-                <p>Tubería Ramal: <strong id="ramalRes">—</strong></p>
-                <p>Tubería Principal: <strong id="principalRes">—</strong></p>
-                <p>Demanda agua: <strong id="demandaRes">—</strong></p>
-                <p>Presión mínima: <strong id="presionRes">—</strong></p>
-            </div>
+  </div>
+  <div class="cg">
+    <div>
+      <div class="card">
+        <div class="card-t"><i class="fa fa-sliders"></i> Parámetros del área</div>
+        <span class="flabel">Ancho del área (m)</span>
+        <input id="ancho" type="number" value="20" min="1">
+        <span class="flabel">Largo del área (m)</span>
+        <input id="largo" type="number" value="20" min="1">
+        <span class="flabel">Espaciado S entre rociadores (m)</span>
+        <input id="espS" type="number" value="4" min="1" max="4.6">
+        <span class="flabel">Espaciado R entre ramales (m)</span>
+        <input id="espR" type="number" value="4" min="1" max="4.6">
+        <span class="flabel">Tipo de rociador NFPA 13</span>
+        <select id="tipoRoc">
+          <option value="5.6" selected>Estándar — k=5.6</option>
+          <option value="5.6">Respuesta rápida — k=5.6</option>
+          <option value="8.0">K=8.0</option>
+          <option value="11.2">Gran gota — k=11.2</option>
+          <option value="14.0">K=14.0</option>
+        </select>
+        <span class="flabel">Ocupación / Clasificación NFPA</span>
+        <select id="ocupacion">
+          <option value="0.10" selected>Ligera — 0.10 gpm/ft² (p.ej. oficinas)</option>
+          <option value="0.15">Ordinaria Grupo 1 — 0.15 gpm/ft²</option>
+          <option value="0.20">Ordinaria Grupo 2 — 0.20 gpm/ft²</option>
+          <option value="0.30">Extra peligro Grupo 1 — 0.30 gpm/ft²</option>
+          <option value="0.40">Extra peligro Grupo 2 — 0.40 gpm/ft²</option>
+        </select>
+        <div style="display:flex;gap:9px;margin-top:18px">
+          <button class="btn btn-p" onclick="calcular()" style="flex:1"><i class="fa fa-calculator"></i> Calcular y dibujar</button>
         </div>
-
-        <div class="card">
-            <h3><i class="fa fa-map" style="color:#ffc400;margin-right:8px"></i>Vista de Planta</h3>
-            <canvas id="plano" width="600" height="500"></canvas>
-        </div>
+        <div id="aok" class="a-ok" style="margin-top:10px"><i class="fa fa-circle-check"></i> Guardado en Supabase</div>
+        <div id="aerr" class="a-err" style="margin-top:10px"><i class="fa fa-circle-xmark"></i> Error al guardar</div>
+      </div>
+      <div class="card" style="margin-top:14px" id="resCard">
+        <div class="card-t" style="margin-bottom:10px"><i class="fa fa-list-check"></i> Materiales</div>
+        <div id="resumen"><div class="empty" style="padding:16px">Calcula para ver el resumen</div></div>
+      </div>
     </div>
+    <div class="card">
+      <div class="card-t" style="margin-bottom:10px"><i class="fa fa-map"></i> Vista de planta — NFPA 13</div>
+      <canvas id="plano" width="600" height="500"></canvas>
+    </div>
+  </div>
+  <div class="card" style="margin-top:18px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div class="card-t" style="margin:0"><i class="fa fa-clock-rotate-left"></i> Historial</div>
+      <button class="btn btn-d" style="padding:6px 12px;font-size:12px" onclick="borrarTodo()"><i class="fa fa-trash"></i> Borrar todo</button>
+    </div>
+    <div class="hs" id="hist"><div class="empty">Cargando historial...</div></div>
+  </div>
 </div>
-
 <script src="config.js"></script>
 <script src="sidebar.js"></script>
 <script>
-document.getElementById('sidebar-container').innerHTML = renderSidebar('incendios');
-
-let resultado = null;
-
-function calcular() {
-    const ancho = parseFloat(document.getElementById('ancho').value);
-    const largo = parseFloat(document.getElementById('largo').value);
-    const espS  = parseFloat(document.getElementById('espS').value);
-    const espR  = parseFloat(document.getElementById('espR').value);
-
-    if(!ancho||!largo||!espS||!espR) return;
-
-    const columnas = Math.ceil(ancho / espS);
-    const filas    = Math.ceil(largo / espR);
-    const rociadores       = columnas * filas;
-    const tuberiaRamal     = filas * ancho;
-    const tuberiaPrincipal = largo;
-    const demanda = rociadores * 60;
-
-    document.getElementById('rRes').textContent         = rociadores + ' pzas';
-    document.getElementById('ramalRes').textContent     = tuberiaRamal.toFixed(0) + ' m';
-    document.getElementById('principalRes').textContent = tuberiaPrincipal.toFixed(0) + ' m';
-    document.getElementById('demandaRes').textContent   = demanda.toLocaleString() + ' LPM';
-    document.getElementById('presionRes').textContent   = '52 kPa (7.5 psi)';
-    document.getElementById('resumenCard').style.display = 'block';
-
-    resultado = { ancho, largo, esp_s:espS, esp_r:espR, rociadores, tuberia_ramal:tuberiaRamal, tuberia_principal:tuberiaPrincipal };
-    dibujar(columnas, filas, ancho, largo, espS, espR);
+initSidebar('incendios');
+const TABLA='calculos_incendios';
+let uc=null;
+function calcular(){
+  const ancho=parseFloat(document.getElementById('ancho').value);
+  const largo=parseFloat(document.getElementById('largo').value);
+  const espS=parseFloat(document.getElementById('espS').value);
+  const espR=parseFloat(document.getElementById('espR').value);
+  const k=parseFloat(document.getElementById('tipoRoc').value);
+  const densidad=parseFloat(document.getElementById('ocupacion').value);
+  if(!ancho||!largo||!espS||!espR)return;
+  const cols=Math.ceil(ancho/espS);
+  const filas=Math.ceil(largo/espR);
+  const rociadores=cols*filas;
+  const tubRamal=filas*ancho;
+  const tubPrin=largo;
+  // Caudal de diseño NFPA 13
+  const area_m2=espS*espR;
+  const area_ft2=area_m2*10.764;
+  const q_gpm=densidad*area_ft2;
+  const q_lpm=q_gpm*3.785;
+  const demandaTotal=rociadores*q_lpm;
+  // Diámetro tubería ramal (simplificado)
+  let dRamal='1"';if(filas>4)dRamal='1-1/4"';if(filas>8)dRamal='1-1/2"';
+  let dPrin='2"';if(ancho>20)dPrin='2-1/2"';if(ancho>30)dPrin='3"';
+  // Presión mínima por k
+  const P_min=Math.pow(q_gpm/k,2);
+  document.getElementById('resumen').innerHTML=`
+    <div class="res-row"><span>Rociadores</span><b>${rociadores} pzas</b></div>
+    <div class="res-row"><span>Tubería ramal ${dRamal}</span><b>${tubRamal.toFixed(0)} m</b></div>
+    <div class="res-row"><span>Tubería principal ${dPrin}</span><b>${tubPrin.toFixed(0)} m</b></div>
+    <div class="res-row"><span>Demanda total</span><b>${demandaTotal.toFixed(0)} L/min</b></div>
+    <div class="res-row"><span>Presión mínima</span><b>${P_min.toFixed(1)} psi</b></div>
+    <div class="res-row"><span>Densidad diseño</span><b>${densidad} gpm/ft²</b></div>
+  `;
+  dibujar(cols,filas,ancho,largo,espS,espR);
+  const p=getProyecto();
+  uc={ancho,largo,esp_s:espS,esp_r:espR,rociadores,tuberia_ramal:tubRamal,tuberia_principal:tubPrin,proyecto_id:p?.id||null};
 }
-
-function dibujar(columnas, filas, ancho, largo, espS, espR) {
-    const canvas = document.getElementById('plano');
-    const ctx    = canvas.getContext('2d');
-    const W=canvas.width, H=canvas.height;
-    const margen=55;
-    const w=W-margen*2, h=H-margen*2;
-
-    ctx.clearRect(0,0,W,H);
-    ctx.fillStyle='#020c1a'; ctx.fillRect(0,0,W,H);
-
-    ctx.strokeStyle='rgba(255,196,0,0.8)'; ctx.lineWidth=2;
-    ctx.strokeRect(margen,margen,w,h);
-
-    ctx.strokeStyle='#ffc400'; ctx.lineWidth=3;
-    ctx.beginPath(); ctx.moveTo(margen,margen+20); ctx.lineTo(margen+w,margen+20); ctx.stroke();
-
-    ctx.strokeStyle='rgba(255,100,80,0.6)'; ctx.lineWidth=1.5;
-    const dx = columnas>1 ? w/(columnas-1) : w/2;
-    for(let i=0;i<columnas;i++){
-        const x=margen+(columnas===1?w/2:i*dx);
-        ctx.beginPath(); ctx.moveTo(x,margen+20); ctx.lineTo(x,margen+h); ctx.stroke();
+function dibujar(cols,filas,ancho,largo,espS,espR){
+  const cv=document.getElementById('plano');
+  const ctx=cv.getContext('2d');
+  const W=cv.width,H=cv.height,mg=50;
+  const w=W-mg*2,h=H-mg*2;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#020c1a';ctx.fillRect(0,0,W,H);
+  // Perímetro
+  ctx.strokeStyle='rgba(255,196,0,.8)';ctx.lineWidth=2;ctx.strokeRect(mg,mg,w,h);
+  // Tubería principal
+  ctx.strokeStyle='#ffc400';ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(mg,mg+20);ctx.lineTo(mg+w,mg+20);ctx.stroke();
+  // Ramales
+  ctx.strokeStyle='rgba(255,100,80,.65)';ctx.lineWidth=1.5;
+  const dx=cols>1?w/(cols-1):w/2;
+  for(let i=0;i<cols;i++){
+    const x=mg+(cols===1?w/2:i*dx);
+    ctx.beginPath();ctx.moveTo(x,mg+20);ctx.lineTo(x,mg+h);ctx.stroke();
+  }
+  // Rociadores
+  const dy=filas>1?h/(filas-1):h/2;
+  for(let i=0;i<cols;i++){
+    for(let j=0;j<filas;j++){
+      const x=mg+(cols===1?w/2:i*dx);
+      const y=mg+(filas===1?h/2:j*dy);
+      ctx.fillStyle='#ff5544';
+      ctx.beginPath();ctx.arc(x,y,5,0,Math.PI*2);ctx.fill();
+      ctx.strokeStyle='rgba(255,255,255,.7)';ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(x-9,y);ctx.lineTo(x+9,y);ctx.moveTo(x,y-9);ctx.lineTo(x,y+9);ctx.stroke();
     }
-
-    const dy = filas>1 ? h/(filas-1) : h/2;
-    for(let i=0;i<columnas;i++){
-        for(let j=0;j<filas;j++){
-            const x=margen+(columnas===1?w/2:i*dx);
-            const y=margen+(filas===1?h/2:j*dy);
-            ctx.fillStyle='#ff5544';
-            ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2); ctx.fill();
-            ctx.strokeStyle='rgba(255,255,255,0.7)'; ctx.lineWidth=1;
-            ctx.beginPath();
-            ctx.moveTo(x-9,y); ctx.lineTo(x+9,y);
-            ctx.moveTo(x,y-9); ctx.lineTo(x,y+9);
-            ctx.stroke();
-        }
-    }
-
-    ctx.fillStyle='rgba(255,255,255,0.4)';
-    ctx.font='11px Inter,sans-serif'; ctx.textAlign='center';
-    ctx.fillText(`${ancho} m`,margen+w/2,H-10);
-    ctx.save(); ctx.translate(15,margen+h/2); ctx.rotate(-Math.PI/2);
-    ctx.fillText(`${largo} m`,0,0); ctx.restore();
-
-    ctx.fillStyle='#ffc400'; ctx.fillRect(margen,H-38,16,4);
-    ctx.fillStyle='rgba(255,255,255,0.4)'; ctx.textAlign='left';
-    ctx.fillText('Tubería Principal',margen+20,H-32);
-    ctx.fillStyle='#ff5544';
-    ctx.beginPath(); ctx.arc(margen+8,H-18,4,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle='rgba(255,255,255,0.4)';
-    ctx.fillText('Rociador',margen+20,H-14);
+  }
+  // Labels
+  ctx.fillStyle='rgba(255,255,255,.4)';ctx.font='11px Inter,sans-serif';ctx.textAlign='center';
+  ctx.fillText(ancho+' m',mg+w/2,H-12);
+  ctx.save();ctx.translate(15,mg+h/2);ctx.rotate(-Math.PI/2);ctx.fillText(largo+' m',0,0);ctx.restore();
+  // Leyenda
+  ctx.fillStyle='#ffc400';ctx.fillRect(mg,H-36,14,3);
+  ctx.fillStyle='rgba(255,255,255,.4)';ctx.textAlign='left';ctx.fillText('Tubería principal',mg+18,H-30);
+  ctx.fillStyle='#ff5544';ctx.beginPath();ctx.arc(mg+7,H-16,4,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,.4)';ctx.fillText('Rociador',mg+18,H-12);
 }
-
-async function guardar() {
-    if(!resultado){ calcular(); }
-    if(!resultado) return;
-    try {
-        await sbFetch('calculos_incendios', { method:'POST', body:resultado });
-        const s=document.getElementById('alertSuccess');
-        s.style.display='block'; setTimeout(()=>s.style.display='none',3000);
-    } catch(err) {
-        const e=document.getElementById('alertError');
-        e.style.display='block'; setTimeout(()=>e.style.display='none',3000);
-    }
+function limpiar(){
+  document.getElementById('ancho').value=20;document.getElementById('largo').value=20;
+  document.getElementById('espS').value=4;document.getElementById('espR').value=4;
+  document.getElementById('tipoRoc').selectedIndex=0;document.getElementById('ocupacion').selectedIndex=0;
+  document.getElementById('resumen').innerHTML='<div class="empty" style="padding:16px">Calcula para ver el resumen</div>';
+  const cv=document.getElementById('plano');const ctx=cv.getContext('2d');
+  ctx.clearRect(0,0,cv.width,cv.height);ctx.fillStyle='#020c1a';ctx.fillRect(0,0,cv.width,cv.height);
+  uc=null;toast('Formulario limpiado');
 }
-
-['ancho','largo','espS','espR'].forEach(id=>{
-    document.getElementById(id).addEventListener('input',()=>{ if(resultado) calcular(); });
+async function guardar(){
+  if(!uc){calcular();}if(!uc)return;
+  const btn=document.getElementById('btnG');btn.disabled=true;btn.innerHTML='<i class="fa fa-spinner fa-spin"></i>';
+  try{await sbFetch(TABLA,{method:'POST',body:uc});toast('Guardado');showA('aok');cargarHist();}
+  catch(e){toast('Error','err');showA('aerr');}
+  finally{btn.disabled=false;btn.innerHTML='<i class="fa fa-save"></i> Guardar';}
+}
+async function borrarUno(id){
+  if(!confirmar('¿Eliminar?'))return;
+  try{await sbDel(TABLA,`?id=eq.${id}`);toast('Eliminado');cargarHist();}catch(e){toast('Error','err');}
+}
+async function borrarTodo(){
+  if(!confirmar('¿Borrar TODO el historial de incendios?'))return;
+  try{await fetch(`${SB_URL}/${TABLA}?id=neq.00000000-0000-0000-0000-000000000000`,{method:'DELETE',headers:SB_H});toast('Eliminado');cargarHist();}catch(e){toast('Error','err');}
+}
+async function cargarHist(){
+  const div=document.getElementById('hist');
+  try{
+    const p=getProyecto();
+    const q=p?.id?`?proyecto_id=eq.${p.id}&order=created_at.desc&limit=30`:'?order=created_at.desc&limit=30';
+    const d=await sbFetch(TABLA,{query:q});
+    if(!d.length){div.innerHTML='<div class="empty">No hay cálculos guardados</div>';return;}
+    div.innerHTML=d.map(c=>`<div class="hi">
+      <i class="fa fa-fire" style="color:var(--gold);flex-shrink:0"></i>
+      <span style="flex:1"><b>${c.ancho}×${c.largo}m</b> / S=${c.esp_s}m R=${c.esp_r}m → <b>${c.rociadores} rociadores</b> | Ramal ${c.tuberia_ramal?.toFixed(0)}m | Ppal ${c.tuberia_principal?.toFixed(0)}m</span>
+      <span style="font-size:10px;color:var(--dim);flex-shrink:0;margin:0 8px">${c.created_at?new Date(c.created_at).toLocaleString('es-MX',{dateStyle:'short',timeStyle:'short'}):''}</span>
+      <button class="bic del hi-del" onclick="borrarUno('${c.id}')"><i class="fa fa-trash"></i></button>
+    </div>`).join('');
+  }catch(e){div.innerHTML='<div class="empty">Error</div>';}
+}
+['ancho','largo','espS','espR','tipoRoc','ocupacion'].forEach(id=>{
+  document.getElementById(id).addEventListener('change',calcular);
+  document.getElementById(id).addEventListener('input',calcular);
 });
-
-calcular();
+calcular();cargarHist();
 </script>
 </body>
 </html>

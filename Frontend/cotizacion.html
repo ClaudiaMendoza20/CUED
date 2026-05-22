@@ -1,175 +1,181 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CUED - Cotización Inteligente</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CUED - Cotización</title>
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
-.cot-grid{display:grid;grid-template-columns:340px 1fr;gap:24px;align-items:start;}
-.step-badge{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:#ffc400;color:#060e1a;font-weight:800;font-size:12px;margin-right:10px;flex-shrink:0;}
-.modulo-btn{display:flex;align-items:center;gap:12px;padding:11px 13px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;cursor:pointer;margin-bottom:7px;transition:all 0.2s;width:100%;text-align:left;}
-.modulo-btn:hover{background:rgba(255,196,0,0.08);border-color:rgba(255,196,0,0.25);}
-.modulo-btn.loaded{border-color:rgba(0,255,153,0.35);background:rgba(0,255,153,0.05);}
-.modulo-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
-.modulo-info{flex:1;}
-.modulo-name{font-size:13px;font-weight:600;color:white;}
-.modulo-desc{font-size:10px;color:rgba(255,255,255,0.35);margin-top:1px;}
-.modulo-check{color:#00ff99;display:none;font-size:14px;}
-.modulo-btn.loaded .modulo-check{display:block;}
-.items-table{width:100%;border-collapse:collapse;}
-.items-table th{background:rgba(255,196,0,0.08);padding:9px 11px;text-align:left;font-size:10px;letter-spacing:1px;color:rgba(255,196,0,0.7);border-bottom:1px solid rgba(255,196,0,0.1);}
-.items-table td{padding:9px 11px;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px;vertical-align:middle;}
-.qty-in,.price-in{padding:6px 8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:6px;color:white;font-size:12px;text-align:right;}
-.qty-in{width:64px;}.price-in{width:100px;}
-.qty-in:focus,.price-in:focus{outline:none;border-color:rgba(255,196,0,0.4);}
-.desc-in{width:100%;padding:6px 8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:6px;color:white;font-size:12px;}
-.desc-in:focus{outline:none;border-color:rgba(255,196,0,0.4);}
-.del-btn{color:rgba(255,100,100,0.4);cursor:pointer;padding:3px 7px;border-radius:4px;font-size:12px;transition:all 0.15s;}
-.del-btn:hover{color:#ff4444;background:rgba(255,68,68,0.1);}
-.total-bar{background:#0f1f38;border:1px solid rgba(255,196,0,0.15);border-radius:12px;padding:18px;margin-top:14px;}
-.total-row{display:flex;justify-content:space-between;padding:5px 0;font-size:13px;color:rgba(255,255,255,0.5);}
-.total-row.final{font-size:20px;font-weight:700;color:white;padding-top:10px;border-top:1px solid rgba(255,255,255,0.1);margin-top:6px;}
-.total-row.final span:last-child{color:#ffc400;}
-.client-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.pdf-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:1000;align-items:center;justify-content:center;}
-.pdf-overlay.show{display:flex;}
-.pdf-box{background:#1a1a2e;border:1px solid rgba(255,196,0,0.2);border-radius:18px;padding:28px;width:min(640px,93vw);max-height:90vh;overflow-y:auto;}
+/* ── Tabla de partidas ── */
+.ct{width:100%;border-collapse:collapse;}
+.ct th{background:rgba(255,255,255,.04);padding:9px 12px;text-align:left;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);border-bottom:1px solid var(--border);}
+.ct td{padding:5px 8px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle;}
+/* Celdas editables inline */
+.editable{
+  background:transparent;border:1px solid transparent;border-radius:6px;
+  padding:7px 9px;color:white;font-size:13px;font-family:'Inter',sans-serif;
+  outline:none;width:100%;transition:all .15s;
+}
+.editable:hover{border-color:rgba(255,255,255,.1);background:rgba(255,255,255,.03);}
+.editable:focus{border-color:rgba(255,196,0,.45);background:rgba(255,196,0,.03);}
+.editable-num{text-align:right;width:100px;}
+.sub-cell{color:var(--gold);font-weight:700;font-size:14px;font-family:'Rajdhani',sans-serif;text-align:right;padding-right:12px;}
+.tot-row td{font-weight:700;color:var(--gold);padding:12px;font-size:16px;font-family:'Rajdhani',sans-serif;}
+.btn-add{background:rgba(255,255,255,.03);border:1px dashed rgba(255,255,255,.12);border-radius:9px;padding:11px;width:100%;color:var(--dim);cursor:pointer;font-size:13px;transition:all .2s;margin-top:8px;font-family:'Inter',sans-serif;}
+.btn-add:hover{background:rgba(255,196,0,.05);border-color:rgba(255,196,0,.25);color:var(--gold);}
+/* Info cliente */
+.info-cli{background:rgba(255,196,0,.05);border:1px solid rgba(255,196,0,.15);border-radius:10px;padding:13px;margin-top:8px;display:none;}
+.info-cli.show{display:block;}
+.cli-name{font-size:15px;font-weight:700;color:var(--gold);}
+/* Modal vista previa PDF */
+.pdf-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:300;padding:20px;}
+.pdf-modal-bg.open{display:flex;}
+.pdf-modal{background:#0d1e35;border:1px solid rgba(255,255,255,.12);border-radius:14px;width:min(820px,98%);max-height:92vh;display:flex;flex-direction:column;overflow:hidden;animation:mUp .22s ease;}
+@keyframes mUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.pdf-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.pdf-header h3{font-family:'Rajdhani',sans-serif;font-size:18px;display:flex;align-items:center;gap:9px;}
+.pdf-actions{display:flex;gap:8px;}
+.pdf-body{flex:1;overflow-y:auto;padding:20px;background:#f5f5f5;}
+/* Vista previa del documento */
+.doc-preview{background:white;max-width:700px;margin:0 auto;padding:0;box-shadow:0 4px 24px rgba(0,0,0,.3);border-radius:4px;font-family:'Inter',sans-serif;font-size:13px;color:#1a1a1a;}
+.doc-head{background:#060e1a;padding:22px 28px;display:flex;justify-content:space-between;align-items:flex-start;}
+.doc-head .brand{color:white;}
+.doc-head .brand .logo{font-size:22px;font-weight:700;letter-spacing:1px;color:#ffc400;}
+.doc-head .brand .sub{font-size:10px;color:rgba(255,255,255,.45);margin-top:2px;}
+.doc-head .cot-num{text-align:right;color:white;}
+.doc-head .cot-num .ref{font-size:18px;font-weight:700;color:#ffc400;}
+.doc-head .cot-num .fecha{font-size:11px;color:rgba(255,255,255,.45);margin-top:3px;}
+.doc-info{display:grid;grid-template-columns:1fr 1fr;background:#1a2f50;padding:16px 28px;gap:10px;}
+.doc-info .sec-title{font-size:9px;letter-spacing:2px;color:rgba(255,255,255,.4);text-transform:uppercase;margin-bottom:4px;}
+.doc-info .sec-val{font-size:13px;font-weight:600;color:white;}
+.doc-info .sec-sub{font-size:11px;color:rgba(255,255,255,.45);margin-top:1px;}
+.doc-body{padding:24px 28px;}
+.doc-table{width:100%;border-collapse:collapse;margin-bottom:18px;}
+.doc-table th{background:#ffc400;color:#060e1a;padding:8px 10px;text-align:left;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;}
+.doc-table td{padding:8px 10px;border-bottom:1px solid #e8e8e8;font-size:12px;}
+.doc-table tr:nth-child(even) td{background:#f9f9f9;}
+.doc-table .num{text-align:right;}
+.doc-total{background:#060e1a;color:white;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-radius:6px;margin-bottom:18px;}
+.doc-total .lbl{font-size:13px;color:rgba(255,255,255,.6);}
+.doc-total .val{font-size:22px;font-weight:700;font-family:'Rajdhani',sans-serif;color:#ffc400;}
+/* Sección de cálculos en preview */
+.doc-calcs{margin-top:16px;}
+.doc-calcs .sec{margin-bottom:14px;}
+.doc-calcs .sec-head{background:#1a2f50;color:#ffc400;padding:7px 12px;font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:700;border-radius:4px 4px 0 0;}
+.doc-calcs table{width:100%;border-collapse:collapse;}
+.doc-calcs td{padding:5px 12px;border-bottom:1px solid #eee;font-size:11px;}
+.doc-calcs tr:nth-child(even) td{background:#f5f5f5;}
+.doc-calcs td:first-child{color:#555;width:50%;}
+.doc-calcs td:last-child{font-weight:600;color:#1a1a1a;}
+.doc-footer{background:#060e1a;padding:14px 28px;text-align:center;}
+.doc-footer p{font-size:10px;color:rgba(255,255,255,.35);margin:2px 0;}
 </style>
 </head>
 <body>
 <div id="sidebar-container"></div>
 <div class="main">
-  <div class="page-header">
-    <div class="page-title">
-      <h1><i class="fa fa-file-invoice-dollar" style="color:#ffc400;margin-right:10px"></i>Cotización Inteligente</h1>
-      <p>Importa cálculos previos automáticamente y genera PDF profesional.</p>
+  <div class="ph">
+    <div class="ph-left">
+      <h1><i class="fa fa-file-invoice-dollar" style="color:var(--gold);margin-right:8px"></i>Cotización</h1>
+      <p>Edita cantidades y precios directamente en la tabla. Vista previa antes de imprimir.</p>
     </div>
-    <div style="display:flex;gap:10px">
-      <button class="btn-secondary" onclick="limpiarTodo()">
-        <i class="fa fa-trash"></i> Limpiar
-      </button>
-      <button class="btn-primary" onclick="mostrarPDF()">
-        <i class="fa fa-file-pdf"></i> Ver / PDF
+    <div class="ph-right">
+      <button class="btn btn-d" onclick="limpiarTodo()"><i class="fa fa-eraser"></i> Limpiar</button>
+      <button class="btn btn-info" onclick="agregarFila()"><i class="fa fa-plus"></i> Partida</button>
+      <button class="btn btn-s" onclick="guardar()" id="btnG"><i class="fa fa-save"></i> Guardar</button>
+      <button class="btn btn-p" onclick="abrirPreview()"><i class="fa fa-eye"></i> Vista previa / PDF</button>
+    </div>
+  </div>
+
+  <!-- Banner proyecto activo -->
+  <div id="proyBanner" class="a-info" style="margin-bottom:14px;display:none">
+    <i class="fa fa-folder-open" style="margin-right:7px"></i>
+    <b id="proyBannerTxt"></b>
+    <a href="proyectos.html" style="color:var(--gold);text-decoration:none;margin-left:10px;font-size:11px">Cambiar →</a>
+  </div>
+
+  <div class="g2" style="margin-bottom:16px">
+    <!-- Cliente -->
+    <div class="card">
+      <div class="card-t"><i class="fa fa-address-card"></i> Cliente</div>
+      <span class="flabel">Seleccionar cliente registrado</span>
+      <select id="clienteSel" onchange="seleccionarCliente()">
+        <option value="">— Seleccionar —</option>
+      </select>
+      <div id="infoCli" class="info-cli">
+        <div class="cli-name" id="cliName"></div>
+        <div style="font-size:11px;color:var(--dim);margin-top:3px" id="cliData"></div>
+      </div>
+      <span class="flabel" style="margin-top:10px">O escribir manualmente</span>
+      <input id="clienteManual" placeholder="Nombre del cliente...">
+    </div>
+    <!-- Datos cotización -->
+    <div class="card">
+      <div class="card-t"><i class="fa fa-file-invoice"></i> Datos</div>
+      <span class="flabel">Número / Referencia</span>
+      <input id="referencia" placeholder="COT-2025-001">
+      <span class="flabel">Proyecto</span>
+      <input id="proyNombre" placeholder="Nombre del proyecto">
+      <span class="flabel">Condiciones / Notas</span>
+      <textarea id="notas" rows="2" placeholder="Vigencia 30 días. Precios no incluyen IVA..."></textarea>
+    </div>
+  </div>
+
+  <!-- Tabla editable -->
+  <div class="card" style="padding:0;overflow:hidden">
+    <table class="ct" id="tabla">
+      <thead><tr>
+        <th style="width:32px;padding-left:12px">#</th>
+        <th>Descripción del trabajo / partida</th>
+        <th style="width:110px;text-align:right">Cantidad</th>
+        <th style="width:130px;text-align:right">Precio unitario</th>
+        <th style="width:130px;text-align:right;padding-right:12px">Subtotal</th>
+        <th style="width:40px"></th>
+      </tr></thead>
+      <tbody id="tbody"></tbody>
+      <tfoot>
+        <tr style="border-top:2px solid rgba(255,196,0,.25)">
+          <td colspan="4" style="text-align:right;color:var(--dim);font-size:12px;padding:12px">TOTAL DE LA COTIZACIÓN</td>
+          <td class="sub-cell" id="totalCell" style="font-size:20px">$0.00</td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+    <div style="padding:8px 12px">
+      <button class="btn-add" onclick="agregarFila()">
+        <i class="fa fa-plus" style="margin-right:7px"></i>Agregar partida — o presiona Tab en la última celda
       </button>
     </div>
   </div>
 
-  <div class="cot-grid">
-    <!-- IZQUIERDA -->
-    <div>
-      <div class="card" style="margin-bottom:14px">
-        <h3 style="display:flex;align-items:center">
-          <span class="step-badge">1</span>Datos del Proyecto
-        </h3>
-        <div class="client-grid">
-          <div><label>Nombre del proyecto</label><input id="pNombre" type="text" placeholder="Altum Victoria"></div>
-          <div><label>Cliente</label><input id="pCliente" type="text" placeholder="Razón social"></div>
-          <div><label>No. cotización</label><input id="cotNum" type="text"></div>
-          <div><label>Vigencia</label><input id="cotFecha" type="date"></div>
-          <div style="grid-column:1/-1"><label>Dirección</label><input id="pDir" type="text" placeholder="Calle, Col., Ciudad, Estado"></div>
-          <div>
-            <label>Moneda</label>
-            <select id="moneda" onchange="recalc()">
-              <option value="MXN">MXN — Pesos</option>
-              <option value="USD">USD — Dólares</option>
-            </select>
-          </div>
-          <div>
-            <label>IVA</label>
-            <select id="iva" onchange="recalc()">
-              <option value="0">Sin IVA</option>
-              <option value="16" selected>16%</option>
-            </select>
-          </div>
-        </div>
-      </div>
+  <div id="aok" class="a-ok" style="margin-top:12px"><i class="fa fa-circle-check"></i> Cotización guardada en Supabase</div>
+  <div id="aerr" class="a-err" style="margin-top:12px"><i class="fa fa-circle-xmark"></i> Error al guardar</div>
 
-      <div class="card">
-        <h3 style="display:flex;align-items:center">
-          <span class="step-badge">2</span>Importar Cálculos
-        </h3>
-        <p style="font-size:11px;color:rgba(255,255,255,0.3);margin-bottom:12px">
-          Clic para cargar el último cálculo guardado de cada módulo.
-        </p>
-        <div id="modList"></div>
-        <div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.06)">
-          <button class="btn-secondary" style="width:100%" onclick="addItem()">
-            <i class="fa fa-plus"></i> Agregar partida manual
-          </button>
-        </div>
-      </div>
+  <!-- Historial -->
+  <div class="card" style="margin-top:18px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div class="card-t" style="margin:0"><i class="fa fa-clock-rotate-left"></i> Cotizaciones guardadas</div>
+      <button class="btn btn-d" style="padding:6px 12px;font-size:12px" onclick="borrarTodas()">
+        <i class="fa fa-trash"></i> Borrar todas
+      </button>
     </div>
-
-    <!-- DERECHA -->
-    <div class="card">
-      <h3 style="display:flex;align-items:center">
-        <span class="step-badge">3</span>Partidas
-      </h3>
-      <div style="overflow-x:auto">
-        <table class="items-table" id="tbl">
-          <thead><tr>
-            <th style="width:26px">#</th>
-            <th>DESCRIPCION</th>
-            <th style="width:68px;text-align:right">CANT.</th>
-            <th style="width:112px;text-align:right">P. UNIT.</th>
-            <th style="width:112px;text-align:right">SUBTOTAL</th>
-            <th style="width:32px"></th>
-          </tr></thead>
-          <tbody id="tbody">
-            <tr id="emptyR">
-              <td colspan="6" style="text-align:center;padding:36px;color:rgba(255,255,255,0.18);font-size:12px">
-                <i class="fa fa-arrow-left" style="margin-right:6px"></i>Importa módulos o agrega partidas
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="total-bar">
-        <div class="total-row"><span>Subtotal</span><span id="tSub">$0.00</span></div>
-        <div class="total-row"><span id="ivaLbl">IVA (16%)</span><span id="tIva">$0.00</span></div>
-        <div class="total-row final"><span>TOTAL</span><span id="tFin">$0.00</span></div>
-      </div>
-
-      <div style="margin-top:14px">
-        <label>Notas / Condiciones</label>
-        <textarea id="notas" rows="3" style="width:100%;padding:10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;color:white;font-size:12px;resize:vertical"
-          placeholder="Ej: Precios en MXN. Vigencia 30 días. No incluye obra civil."></textarea>
-      </div>
-
-      <div style="margin-top:14px;display:flex;gap:10px">
-        <button class="btn-primary" onclick="guardar()" style="flex:1">
-          <i class="fa fa-save"></i> Guardar
-        </button>
-        <button class="btn-secondary" onclick="mostrarPDF()">
-          <i class="fa fa-eye"></i> Vista PDF
-        </button>
-      </div>
-      <div id="ok" class="alert-success" style="margin-top:8px;display:none">
-        <i class="fa fa-circle-check"></i> Guardado en Supabase
-      </div>
-      <div id="err" class="alert-error" style="margin-top:8px;display:none">
-        <i class="fa fa-circle-xmark"></i> Error al guardar
-      </div>
-    </div>
+    <div class="hs" id="histCot"><div class="empty">Cargando...</div></div>
   </div>
 </div>
 
-<!-- PDF OVERLAY -->
-<div class="pdf-overlay" id="pdfOv" onclick="if(event.target===this)cerrarPDF()">
-  <div class="pdf-box">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-      <h2 style="font-size:17px;margin:0">Vista previa PDF</h2>
-      <button class="btn-secondary" onclick="cerrarPDF()"><i class="fa fa-times"></i></button>
+<!-- ══ MODAL VISTA PREVIA PDF ══ -->
+<div class="pdf-modal-bg" id="pdfModal">
+  <div class="pdf-modal">
+    <div class="pdf-header">
+      <h3><i class="fa fa-eye" style="color:var(--gold)"></i> Vista previa — Cotización</h3>
+      <div class="pdf-actions">
+        <button class="btn btn-s" onclick="cerrarPreview()"><i class="fa fa-times"></i> Cerrar</button>
+        <button class="btn btn-p" onclick="descargarPDF()"><i class="fa fa-download"></i> Descargar PDF</button>
+      </div>
     </div>
-    <div id="pdfPrev" style="border-radius:8px;overflow:hidden"></div>
-    <div style="margin-top:16px;display:flex;gap:10px">
-      <button class="btn-primary" onclick="descargarPDF()" style="flex:1">
-        <i class="fa fa-download"></i> Descargar PDF
-      </button>
-      <button class="btn-secondary" onclick="cerrarPDF()">Cerrar</button>
+    <div class="pdf-body" id="pdfBody">
+      <!-- se genera dinámicamente -->
     </div>
   </div>
 </div>
@@ -177,394 +183,646 @@
 <script src="config.js"></script>
 <script src="sidebar.js"></script>
 <script>
-document.getElementById('sidebar-container').innerHTML = renderSidebar('cotizacion');
+initSidebar('cotizacion');
 
-const SB='https://tazheiutbleaexmcsopy.supabase.co/rest/v1';
-const KEY='sb_publishable_i5hoZ9cKYlksVhpMcee_-Q_LQes-FOK';
-const HDR={'apikey':KEY,'Authorization':'Bearer '+KEY};
-const HDRP={...HDR,'Content-Type':'application/json','Prefer':'return=representation'};
+let filas = [], nid = 1, clienteObj = null;
+let calcData = {}; // almacena resultados de cálculos del proyecto
 
-document.getElementById('cotFecha').value=new Date(Date.now()+30*86400000).toISOString().split('T')[0];
-document.getElementById('cotNum').value='COT-'+new Date().getFullYear()+'-'+String(Math.floor(Math.random()*900)+100);
-
-let ic=0;
-
-// ── MÓDULOS — cada uno con icono FA en lugar de emoji ──────────────────
-const MODS=[
-  {k:'calculos_electricos',    nm:'Eléctrico',          ico:'fa-bolt',               col:'#ffc400', ds:'Calibre, breaker, conduit',
-   fn:d=>[
-    {d:`Suministro e instalación conductor ${d.awg||'—'} THHN/THWN-LS`,q:1,p:ep('cond',d.awg)},
-    {d:`Interruptor termomagnético ${d.breaker||'—'} A`,q:1,p:ep('brk',d.breaker)},
-    {d:`Tubería conduit ${d.conduit||'—'}`,q:1,p:ep('cdt',d.conduit)},
-   ]},
-  {k:'calculos_caida_tension', nm:'Caída de Tensión',   ico:'fa-arrow-trend-down',   col:'#ff9500', ds:'Verificación e% NOM',
-   fn:d=>[
-    {d:`Conductor ${d.calibre||'—'} AWG, L=${d.longitud||'—'}m, ${d.polos||'—'} polos — e%=${d.epct||'—'}% (${d.estado||'—'})`,q:1,p:ep('cond',d.calibre)*(parseFloat(d.longitud)||1)},
-   ]},
-  {k:'calculos_motores',       nm:'Motores Trifásicos', ico:'fa-gear',               col:'#00d4ff', ds:'HP, arranque, protección',
-   fn:d=>[
-    {d:`Motor trifásico ${d.hp||'—'} HP / ${d.tension||'—'}V — Arranque: ${d.arranque||'—'}`,q:1,p:ep('mot',d.hp)},
-    {d:`Conductor ${d.calibre||'—'} para alimentación de motor`,q:1,p:ep('cond',d.calibre)},
-    {d:`Protección termomagnética ${d.proteccion||'—'} para motor`,q:1,p:ep('brk',d.proteccion)},
-   ]},
-  {k:'calculos_hidraulicos',   nm:'Hidráulico',         ico:'fa-droplet',            col:'#00b4d8', ds:'Red agua potable y bomba',
-   fn:d=>[
-    {d:`Tubería hidráulica PVC Ced.40 ${d.diametro||'—'}, L=${d.longitud||'—'}m`,q:parseFloat(d.longitud)||1,p:ep('hid',d.diametro)},
-    {d:`Bomba centrifuga ${d.bomba||'—'}`,q:1,p:ep('bom',d.bomba)},
-   ]},
-  {k:'calculos_cisterna',      nm:'Cisterna',           ico:'fa-database',           col:'#0077b6', ds:'Capacidad por dotaciones',
-   fn:d=>[
-    {d:`Cisterna de concreto armado, capacidad ${d.volumen_m3||'—'} m³`,q:1,p:Math.round((d.volumen_m3||0)*3500)},
-    {d:`Equipo de bombeo para cisterna`,q:1,p:18000},
-    {d:`Instalación hidráulica: tuberías, válvulas, flotador, arrancador`,q:1,p:8500},
-   ]},
-  {k:'calculos_sanitario',     nm:'Sanitario / UM',     ico:'fa-toilet',             col:'#00e0a4', ds:'Muebles, bajantes, diámetros',
-   fn:d=>[
-    {d:`Red sanitaria — ${d.total_um||'—'} U.M., Ø principal ${d.diametro_principal||'—'}`,q:1,p:Math.round((d.total_um||0)*280)},
-    {d:`Bajante sanitaria ${d.bajante_sanitaria||'—'} tubería ABS Ced.40`,q:1,p:3800},
-    {d:`Ventilaciones, registros y prueba hidrostática sanitaria`,q:1,p:4200},
-   ]},
-  {k:'calculos_pluvial',       nm:'Pluvial',            ico:'fa-cloud-rain',         col:'#64b4ff', ds:'Canalón, bajante, gasto',
-   fn:d=>[
-    {d:`Canalón lámina galvanizada ${d.calibre||'—'}, ancho ${d.ancho_canalon_in||'—'}", Q=${d.gasto_ls||'—'} L/s`,q:parseFloat(d.largo)||1,p:ep('can',d.ancho_canalon_in)},
-    {d:`Bajante pluvial ${d.bajante_dim||'—'} lámina ${d.calibre||'—'}`,q:1,p:4500},
-    {d:`Coladeras y registros pluviales`,q:1,p:2800},
-   ]},
-  {k:'calculos_hvac',          nm:'HVAC',               ico:'fa-fan',                col:'#90e0ef', ds:'Aire acondicionado / TR',
-   fn:d=>[
-    {d:`Equipo A/C ${d.tons||'—'} TR / ${d.btu||'—'} BTU/hr`,q:1,p:ep('hvac',d.tons)},
-    {d:`Instalación A/C: tuberías cobre, drenaje, eléctrico, startup`,q:1,p:Math.round((d.tons||0)*1800)},
-   ]},
-  {k:'calculos_incendios',     nm:'Contra Incendios',   ico:'fa-fire',               col:'#ff6b6b', ds:'Rociadores NFPA 13',
-   fn:d=>[
-    {d:`Rociador automático pendent/upright K5.6 155°F bronce`,q:d.rociadores||1,p:280},
-    {d:`Tubería acero negro Ced.10 ramal, L=${d.tuberia_ramal||'—'}m`,q:parseFloat(d.tuberia_ramal)||1,p:420},
-    {d:`Tubería acero negro Ced.10 principal, L=${d.tuberia_principal||'—'}m`,q:parseFloat(d.tuberia_principal)||1,p:680},
-    {d:`Válvulas OS&Y, alarma de flujo, prueba hidrostática SCI`,q:1,p:12000},
-   ]},
-  {k:'calculos_gas_lp',        nm:'Gas LP',             ico:'fa-fire-flame-curved',  col:'#fd7e14', ds:'Aparatos, red y tanque',
-   fn:d=>[
-    {d:`Red gas LP cobre tipo L — ${d.aparatos_activos||'—'} aparatos, consumo ${d.consumo_m3hr||'—'} m³/hr`,q:1,p:Math.round(parseFloat(d.consumo_m3hr||0)*4200+8000)},
-    {d:`Regulador de baja presión Fisher + válvulas antisísmicas`,q:1,p:3800},
-    {d:`Prueba de hermeticidad 10 kg/cm²`,q:1,p:2500},
-   ]},
-];
-
-// ── Precio estimado por tipo ───────────────────────────────────────────
-function ep(t,v){
-  const s=String(v||'').replace(/[^0-9./]/g,'');
-  const n=parseFloat(s)||0;
-  if(t==='cond'){
-    const m={12:8,10:12,8:18,6:26,4:38,3:48,2:62,1:78};
-    const k=String(v||'').replace(' AWG','').replace('#','');
-    return (m[k]||62)*100;
-  }
-  if(t==='brk'){const closest=[15,20,25,30,40,50,60,70,80,90,100,125,150,200,250].reduce((a,b)=>Math.abs(b-n)<Math.abs(a-n)?b:a);const mp={15:280,20:320,25:360,30:420,40:520,50:620,60:720,70:850,80:980,90:1100,100:1250,125:1600,150:2000,200:2800,250:3500};return mp[closest]||500;}
-  if(t==='cdt'){if(String(v).includes('1/2'))return 45;if(String(v).includes('3/4'))return 62;if(String(v).includes('1"'))return 88;return 85;}
-  if(t==='mot'){const mp={0.5:3200,0.75:3800,1:4500,1.5:5500,2:6800,3:8500,5:12000,7.5:18000,10:24000,15:32000,20:42000,25:55000,30:68000,50:110000};const k=Object.keys(mp).reduce((a,b)=>Math.abs(b-n)<Math.abs(a-n)?b:a);return mp[k]||12000;}
-  if(t==='hvac'){const mp={1:12000,1.5:16000,2:21000,2.5:26000,3:32000,4:42000,5:52000,6:62000};const k=Object.keys(mp).reduce((a,b)=>Math.abs(b-n)<Math.abs(a-n)?b:a);return mp[k]||25000;}
-  if(t==='hid') return n<=1?85:n<=2?120:n<=3?180:240;
-  if(t==='bom') return 8500;
-  if(t==='can'){const mp={4:380,6:520,8:680,10:850,12:1100};const k=Object.keys(mp).reduce((a,b)=>Math.abs(b-n)<Math.abs(a-n)?b:a);return mp[k]||680;}
-  return 0;
+// ── Proyecto activo ─────────────────────────────────────
+const proy = getProyecto();
+if (proy) {
+  document.getElementById('proyBanner').style.display = 'block';
+  document.getElementById('proyBannerTxt').textContent =
+    'Proyecto: ' + proy.nombre + (proy.cliente_nombre ? ' — ' + proy.cliente_nombre : '');
+  document.getElementById('proyNombre').value = proy.nombre;
+  document.getElementById('referencia').value =
+    'COT-' + new Date().getFullYear() + '-' + String(Math.floor(Math.random()*900)+100);
 }
 
-// ── Render botones de módulos con icono FA ─────────────────────────────
-function renderMods(){
-  document.getElementById('modList').innerHTML=MODS.map(m=>`
-    <button class="modulo-btn" id="mb_${m.k}" onclick="importar('${m.k}')">
-      <div class="modulo-icon" style="background:${m.col}22;border:1px solid ${m.col}44;color:${m.col}">
-        <i class="fa ${m.ico}"></i>
-      </div>
-      <div class="modulo-info">
-        <div class="modulo-name">${m.nm}</div>
-        <div class="modulo-desc">${m.ds}</div>
-      </div>
-      <i class="fa fa-check modulo-check"></i>
-    </button>`).join('');
-}
-
-async function importar(k){
-  const mod=MODS.find(m=>m.k===k);
-  if(!mod) return;
-  try{
-    const r=await fetch(`${SB}/${k}?order=created_at.desc&limit=1`,{headers:HDR});
-    const d=await r.json();
-    if(!Array.isArray(d)||!d.length){
-      alert(`No hay cálculos guardados de "${mod.nm}".\nPrimero abre el módulo, realiza el cálculo y presiona "Guardar".`);
-      return;
+// ── Cargar clientes ─────────────────────────────────────
+async function cargarClientes() {
+  try {
+    const cl = await sbFetch('clientes', {query:'?order=nombre.asc&select=id,nombre,empresa,rfc,telefono,direccion,ciudad'});
+    const sel = document.getElementById('clienteSel');
+    sel.innerHTML = '<option value="">— Seleccionar cliente —</option>';
+    cl.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c.id;
+      o.textContent = c.nombre + (c.empresa ? ' — ' + c.empresa : '');
+      o.dataset.obj = JSON.stringify(c);
+      sel.appendChild(o);
+    });
+    // Pre-seleccionar si el proyecto tiene cliente
+    if (proy?.cliente_id) {
+      sel.value = proy.cliente_id;
+      seleccionarCliente();
     }
-    mod.fn(d[0]).forEach(i=>addItem(i.d,i.q,Math.round(i.p)));
-    document.getElementById('mb_'+k).classList.add('loaded');
-    recalc();
-  }catch(e){console.error(e);alert('Error de conexión con Supabase');}
+  } catch(e) { console.error('Clientes:', e); }
 }
 
-// ── Items ──────────────────────────────────────────────────────────────
-function addItem(desc='',qty=1,precio=0){
-  const id=++ic;
-  document.getElementById('emptyR')?.remove();
-  const tr=document.createElement('tr');
-  tr.id='r'+id;
-  tr.innerHTML=`
-    <td style="color:rgba(255,255,255,0.3);font-size:11px">${id}</td>
-    <td><input class="desc-in" type="text" value="${desc.replace(/"/g,'&quot;')}" oninput="recalc()"></td>
-    <td><input class="qty-in" type="number" value="${qty}" min="0.01" step="0.01" oninput="recalc()" id="q${id}"></td>
-    <td><input class="price-in" type="number" value="${precio}" min="0" step="1" oninput="recalc()" id="p${id}"></td>
-    <td id="s${id}" style="font-weight:600;color:#ffc400;text-align:right">${fmt(qty*precio)}</td>
-    <td><span class="del-btn" onclick="delItem(${id})"><i class="fa fa-times"></i></span></td>`;
-  document.getElementById('tbody').appendChild(tr);
-  recalc();
-}
-
-function delItem(id){
-  document.getElementById('r'+id)?.remove();
-  if(!document.querySelectorAll('#tbody tr').length){
-    const tr=document.createElement('tr'); tr.id='emptyR';
-    tr.innerHTML='<td colspan="6" style="text-align:center;padding:36px;color:rgba(255,255,255,0.18);font-size:12px"><i class="fa fa-arrow-left" style="margin-right:6px"></i>Importa módulos o agrega partidas</td>';
-    document.getElementById('tbody').appendChild(tr);
+function seleccionarCliente() {
+  const sel = document.getElementById('clienteSel');
+  const opt = sel.options[sel.selectedIndex];
+  if (!opt?.dataset?.obj) {
+    document.getElementById('infoCli').classList.remove('show');
+    clienteObj = null; return;
   }
-  recalc();
+  clienteObj = JSON.parse(opt.dataset.obj);
+  document.getElementById('cliName').textContent = clienteObj.nombre;
+  const lines = [];
+  if (clienteObj.empresa)   lines.push(clienteObj.empresa);
+  if (clienteObj.rfc)       lines.push('RFC: ' + clienteObj.rfc);
+  if (clienteObj.telefono)  lines.push('Tel: ' + clienteObj.telefono);
+  if (clienteObj.direccion) lines.push(clienteObj.direccion + (clienteObj.ciudad ? ', ' + clienteObj.ciudad : ''));
+  document.getElementById('cliData').innerHTML = lines.join('<br>');
+  document.getElementById('clienteManual').value = clienteObj.nombre;
+  document.getElementById('infoCli').classList.add('show');
 }
 
-function limpiarTodo(){
-  if(!confirm('¿Limpiar todo?')) return;
-  ic=0;
-  document.getElementById('tbody').innerHTML='<tr id="emptyR"><td colspan="6" style="text-align:center;padding:36px;color:rgba(255,255,255,0.18);font-size:12px"><i class="fa fa-arrow-left" style="margin-right:6px"></i>Importa módulos o agrega partidas</td></tr>';
-  document.querySelectorAll('.modulo-btn').forEach(b=>b.classList.remove('loaded'));
-  recalc();
-}
-
-function recalc(){
-  let sub=0;
-  document.querySelectorAll('#tbody tr:not(#emptyR)').forEach(tr=>{
-    const id=tr.id.replace('r','');
-    const q=parseFloat(document.getElementById('q'+id)?.value)||0;
-    const p=parseFloat(document.getElementById('p'+id)?.value)||0;
-    const s=q*p; sub+=s;
-    const el=document.getElementById('s'+id);
-    if(el) el.textContent=fmt(s);
-  });
-  const ivap=parseFloat(document.getElementById('iva').value)||0;
-  const ivaa=sub*ivap/100;
-  document.getElementById('tSub').textContent=fmt(sub);
-  document.getElementById('ivaLbl').textContent=`IVA (${ivap}%)`;
-  document.getElementById('tIva').textContent=fmt(ivaa);
-  document.getElementById('tFin').textContent=fmt(sub+ivaa);
-}
-
-function fmt(n){
-  return new Intl.NumberFormat('es-MX',{style:'currency',currency:document.getElementById('moneda').value}).format(n);
-}
-
-// ── Guardar ────────────────────────────────────────────────────────────
-async function guardar(){
-  const p={cliente:document.getElementById('pCliente').value,referencia:document.getElementById('cotNum').value,total:parseFloat(document.getElementById('tFin').textContent.replace(/[^0-9.]/g,''))||0,status:'borrador'};
-  try{
-    const r=await fetch(SB+'/cotizaciones',{method:'POST',headers:HDRP,body:JSON.stringify(p)});
-    if(!r.ok) throw new Error(await r.text());
-    document.getElementById('ok').style.display='block';
-    setTimeout(()=>document.getElementById('ok').style.display='none',3000);
-  }catch(e){
-    console.error(e);
-    document.getElementById('err').style.display='block';
-    setTimeout(()=>document.getElementById('err').style.display='none',4000);
+// ── Cargar cálculos del proyecto ───────────────────────
+async function cargarCalculos() {
+  if (!proy?.id) return;
+  const mods = JSON.parse(proy.modulos || '[]');
+  const tablas = {
+    electrico:  'calculos_electricos',
+    hidraulico: 'calculos_hidraulicos',
+    cisterna:   'calculos_cisterna',
+    hvac:       'calculos_hvac',
+    incendios:  'calculos_incendios',
+    gas_lp:     'calculos_gas_lp',
+    gas:        'calculos_gas',
+    sanitario:  'calculos_sanitario',
+    pluvial:    'calculos_pluvial',
+    motores:    'calculos_motores',
+    caida:      'calculos_caida_tension',
+  };
+  calcData = {};
+  for (const k of mods) {
+    if (!tablas[k]) continue;
+    try {
+      const d = await sbFetch(tablas[k], {query:`?proyecto_id=eq.${proy.id}&order=created_at.desc&limit=1`});
+      if (d.length) calcData[k] = d[0];
+    } catch(e) {}
   }
 }
 
-// ── Items actuales ─────────────────────────────────────────────────────
-function getRows(){
-  const rows=[];
-  document.querySelectorAll('#tbody tr:not(#emptyR)').forEach(tr=>{
-    const id=tr.id.replace('r','');
-    const desc=tr.querySelector('.desc-in')?.value||'';
-    const q=parseFloat(document.getElementById('q'+id)?.value)||0;
-    const p=parseFloat(document.getElementById('p'+id)?.value)||0;
-    rows.push({desc,q,p,s:q*p});
-  });
-  return rows;
+// ── Tabla editable ──────────────────────────────────────
+function agregarFila(desc='', cant=1, precio=0) {
+  const id = nid++;
+  filas.push({id, desc, cant, precio});
+  render();
+  // Enfocar último campo de descripción
+  setTimeout(() => {
+    const inputs = document.querySelectorAll('.desc-input');
+    if (inputs.length) inputs[inputs.length-1].focus();
+  }, 50);
 }
 
-// ── PDF Preview ────────────────────────────────────────────────────────
-function mostrarPDF(){
-  const rows=getRows();
-  const ivap=parseFloat(document.getElementById('iva').value)||0;
-  const sub=rows.reduce((a,r)=>a+r.s,0);
-  const iva=sub*ivap/100;
-  const total=sub+iva;
-  const mon=document.getElementById('moneda').value;
-  const f=n=>new Intl.NumberFormat('es-MX',{style:'currency',currency:mon}).format(n);
-  const fecha=new Date().toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'});
+function eliminarFila(id) {
+  filas = filas.filter(f => f.id !== id);
+  render();
+}
 
-  let html=`<div style="font-family:Arial,sans-serif;color:#1a1a2e;background:white">
-    <div style="background:#060e1a;padding:24px 28px;color:white">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+function render() {
+  let total = 0;
+  document.getElementById('tbody').innerHTML = filas.map((f, i) => {
+    const sub = (parseFloat(f.cant) || 0) * (parseFloat(f.precio) || 0);
+    total += sub;
+    return `<tr id="row-${f.id}">
+      <td style="padding-left:12px;color:var(--dim);font-size:11px;width:32px">${i+1}</td>
+      <td>
+        <input class="editable desc-input"
+          type="text"
+          value="${f.desc.replace(/"/g,'&quot;')}"
+          placeholder="Descripción del trabajo..."
+          data-idx="${i}" data-field="desc"
+          onchange="updateFila(${i},'desc',this.value)"
+          onkeydown="handleKeyDesc(event,${i})">
+      </td>
+      <td>
+        <input class="editable editable-num"
+          type="number"
+          value="${f.cant}"
+          min="0" step="0.01"
+          placeholder="0"
+          data-idx="${i}" data-field="cant"
+          oninput="updateFila(${i},'cant',this.value)"
+          onkeydown="handleKeyNum(event,${i},'cant')">
+      </td>
+      <td>
+        <input class="editable editable-num"
+          type="number"
+          value="${f.precio}"
+          min="0" step="0.01"
+          placeholder="0.00"
+          data-idx="${i}" data-field="precio"
+          oninput="updateFila(${i},'precio',this.value)"
+          onkeydown="handleKeyNum(event,${i},'precio')">
+      </td>
+      <td class="sub-cell" id="sub-${f.id}">
+        $${sub.toLocaleString('es-MX',{minimumFractionDigits:2})}
+      </td>
+      <td style="text-align:center">
+        <button class="bic del" onclick="eliminarFila(${f.id})" title="Eliminar partida">
+          <i class="fa fa-trash"></i>
+        </button>
+      </td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="6" class="empty" style="padding:28px">
+    Sin partidas — agrega con el botón o presiona <b>Enter</b> en el campo de descripción
+  </td></tr>`;
+
+  document.getElementById('totalCell').textContent =
+    '$' + total.toLocaleString('es-MX', {minimumFractionDigits:2});
+}
+
+function updateFila(i, field, val) {
+  if (i >= filas.length) return;
+  filas[i][field] = field === 'desc' ? val : parseFloat(val) || 0;
+  // Actualizar subtotal sin re-render completo
+  const f = filas[i];
+  const sub = (f.cant || 0) * (f.precio || 0);
+  const subEl = document.getElementById('sub-' + f.id);
+  if (subEl) subEl.textContent = '$' + sub.toLocaleString('es-MX',{minimumFractionDigits:2});
+  // Actualizar total
+  const total = filas.reduce((s,f) => s + (parseFloat(f.cant)||0)*(parseFloat(f.precio)||0), 0);
+  document.getElementById('totalCell').textContent =
+    '$' + total.toLocaleString('es-MX', {minimumFractionDigits:2});
+}
+
+// Navegación con teclado
+function handleKeyDesc(e, i) {
+  if (e.key === 'Enter' || e.key === 'Tab') {
+    // Tab sin shift → ir a cantidad de esta fila
+    if (e.key === 'Tab' && !e.shiftKey) return; // dejar comportamiento nativo
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      // Si es la última fila, agregar nueva
+      if (i === filas.length - 1) agregarFila();
+      else {
+        const nextInputs = document.querySelectorAll('.desc-input');
+        if (nextInputs[i+1]) nextInputs[i+1].focus();
+      }
+    }
+  }
+}
+
+function handleKeyNum(e, i, field) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    if (field === 'cant') {
+      // Ir a precio
+      const precioInputs = document.querySelectorAll('input[data-field="precio"]');
+      if (precioInputs[i]) precioInputs[i].focus();
+    } else if (field === 'precio') {
+      // Ir a descripción siguiente o nueva fila
+      if (i === filas.length - 1) agregarFila();
+      else {
+        const descInputs = document.querySelectorAll('.desc-input');
+        if (descInputs[i+1]) descInputs[i+1].focus();
+      }
+    }
+  }
+}
+
+function limpiarTodo() {
+  if (filas.length && !confirmar('¿Limpiar todas las partidas?')) return;
+  filas = []; nid = 1;
+  document.getElementById('clienteSel').value = '';
+  document.getElementById('clienteManual').value = '';
+  document.getElementById('notas').value = '';
+  document.getElementById('infoCli').classList.remove('show');
+  clienteObj = null;
+  render(); toast('Cotización limpiada');
+}
+
+// ── Guardar ─────────────────────────────────────────────
+async function guardar() {
+  if (!filas.length) { toast('Agrega al menos una partida', 'err'); return; }
+  const cliente = document.getElementById('clienteManual').value ||
+    (clienteObj?.nombre || 'Sin cliente');
+  const ref = document.getElementById('referencia').value || 'COT-' + Date.now();
+  const total = filas.reduce((s,f) => s + (parseFloat(f.cant)||0)*(parseFloat(f.precio)||0), 0);
+  const btn = document.getElementById('btnG');
+  btn.disabled = true; btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i>';
+  try {
+    const cotRes = await sbFetch('cotizaciones', {method:'POST', body:{
+      cliente, referencia:ref, total,
+      notas: document.getElementById('notas').value,
+      proyecto_id: proy?.id || null,
+      status: 'borrador'
+    }});
+    const cotId = cotRes[0]?.id;
+    if (cotId) {
+      for (const f of filas) {
+        await sbFetch('cotizaciones_items', {method:'POST', body:{
+          cotizacion_id: cotId,
+          descripcion: f.desc || 'Sin descripción',
+          cantidad: parseFloat(f.cant) || 1,
+          precio_unitario: parseFloat(f.precio) || 0
+        }});
+      }
+    }
+    toast('Cotización guardada'); showA('aok'); cargarHist();
+  } catch(e) { toast('Error al guardar', 'err'); showA('aerr'); }
+  finally { btn.disabled = false; btn.innerHTML = '<i class="fa fa-save"></i> Guardar'; }
+}
+
+// ── Historial ────────────────────────────────────────────
+async function cargarHist() {
+  const div = document.getElementById('histCot');
+  try {
+    const q = proy?.id
+      ? `?proyecto_id=eq.${proy.id}&order=created_at.desc&limit=20`
+      : '?order=created_at.desc&limit=20';
+    const d = await sbFetch('cotizaciones', {query:q});
+    if (!d.length) { div.innerHTML = '<div class="empty">No hay cotizaciones guardadas</div>'; return; }
+    div.innerHTML = d.map(c => `
+      <div class="hi">
+        <i class="fa fa-file-invoice-dollar" style="color:var(--gold);flex-shrink:0"></i>
+        <span style="flex:1">
+          <b>${c.referencia || 'Sin referencia'}</b> | ${c.cliente || 'Sin cliente'}
+          | <b style="color:var(--green)">$${(c.total||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</b>
+        </span>
+        <span style="font-size:10px;color:var(--dim);flex-shrink:0;margin:0 8px">
+          ${c.created_at ? new Date(c.created_at).toLocaleString('es-MX',{dateStyle:'short',timeStyle:'short'}) : ''}
+        </span>
+        <button class="bic del hi-del" onclick="borrarCot('${c.id}')" title="Eliminar">
+          <i class="fa fa-trash"></i>
+        </button>
+      </div>`).join('');
+  } catch(e) { div.innerHTML = '<div class="empty">Error al cargar</div>'; }
+}
+
+async function borrarCot(id) {
+  if (!confirmar('¿Eliminar esta cotización?')) return;
+  try { await sbDel('cotizaciones', `?id=eq.${id}`); toast('Eliminada'); cargarHist(); }
+  catch(e) { toast('Error', 'err'); }
+}
+
+async function borrarTodas() {
+  if (!confirmar('¿Borrar TODAS las cotizaciones?\nNo se puede deshacer.')) return;
+  try {
+    await fetch(`${SB_URL}/cotizaciones?id=neq.00000000-0000-0000-0000-000000000000`,
+      {method:'DELETE', headers:SB_H});
+    await fetch(`${SB_URL}/cotizaciones_items?id=neq.00000000-0000-0000-0000-000000000000`,
+      {method:'DELETE', headers:SB_H});
+    toast('Cotizaciones eliminadas'); cargarHist();
+  } catch(e) { toast('Error', 'err'); }
+}
+
+// ── VISTA PREVIA & PDF ──────────────────────────────────
+function getClienteTexto() {
+  return document.getElementById('clienteManual').value || clienteObj?.nombre || 'Sin cliente';
+}
+
+function buildCalcSections() {
+  // Genera HTML de los cálculos del proyecto para la vista previa
+  const labels = {
+    electrico:  'Cálculo Eléctrico',
+    hidraulico: 'Cálculo Hidráulico',
+    cisterna:   'Cisterna',
+    hvac:       'HVAC — Climatización',
+    incendios:  'Contra Incendios NFPA 13',
+    gas_lp:     'Gas LP',
+    gas:        'Gas / Aire',
+    sanitario:  'Sanitario (UM)',
+    pluvial:    'Pluvial',
+    motores:    'Motores',
+    caida:      'Caída de Tensión',
+  };
+
+  const campos = {
+    electrico:  [['Carga','carga','W'],['Voltaje','voltaje','V'],['Sistema','fases','Φ'],['Corriente','corriente','A'],['Calibre','awg',''],['Protección','breaker',''],['Conduit','conduit','']],
+    hidraulico: [['Gasto','gasto','L/min'],['Longitud','longitud','m'],['Diámetro','diametro',''],['Velocidad','velocidad',''],['Bomba','bomba','']],
+    cisterna:   [['Dotación total','dotacion_total_lt','L/día'],['Días almac.','dias_almacenamiento','días'],['Volumen cisterna','volumen_m3','m³']],
+    hvac:       [['Área','area','m²'],['Personas','personas',''],['Capacidad','tons','TR'],['BTU/hr','btu',''],['Consumo est.','consumo_kw','kW']],
+    incendios:  [['Área','ancho','m ancho'],['Largo','largo','m'],['Rociadores','rociadores','pzas'],['Tubería ramal','tuberia_ramal','m'],['Tubería principal','tuberia_principal','m']],
+    gas_lp:     [['Consumo','consumo_m3hr','m³/hr'],['Consumo MJ','consumo_mjhr','MJ/hr'],['Aparatos activos','aparatos_activos','']],
+    gas:        [['Tipo gas','tipo_gas',''],['Consumo','consumo','MJ/hr'],['Longitud','longitud','m'],['Diámetro','diametro',''],['Caudal','caudal','']],
+    sanitario:  [['Total UM','total_um','UM'],['Gasto punta','gasto_punta','L/s'],['Ø Principal','diametro_principal',''],['Bajante','bajante_sanitaria','']],
+    pluvial:    [['Área cubierta','ancho','m ancho'],['Largo','largo','m'],['Gasto','gasto_ls','L/s'],['Canalón','ancho_canalon_in','"'],['Bajante','bajante_dim',''],['Calibre','calibre','']],
+    motores:    [['Potencia','hp','HP'],['Tensión','tension','V'],['Corriente FLA','corriente','A'],['Calibre','calibre',''],['Protección','proteccion','']],
+    caida:      [['Calibre','calibre','AWG'],['Longitud','longitud','m'],['Tensión','tension','V'],['Corriente','corriente','A'],['Caída e%','epct','%'],['Estado','estado','']],
+  };
+
+  let html = '';
+  for (const [key, data] of Object.entries(calcData)) {
+    const lbl = labels[key] || key;
+    const cfgs = campos[key] || [];
+    if (!cfgs.length) continue;
+    const rows = cfgs.map(([label, field, unit]) => {
+      const val = data[field];
+      if (val === undefined || val === null || val === '') return '';
+      return `<tr><td>${label}</td><td>${val}${unit ? ' ' + unit : ''}</td></tr>`;
+    }).filter(Boolean).join('');
+    if (!rows) continue;
+    html += `<div class="sec">
+      <div class="sec-head">${lbl}</div>
+      <table>${rows}</table>
+    </div>`;
+  }
+  return html;
+}
+
+async function abrirPreview() {
+  await cargarCalculos();
+  const cliente = getClienteTexto();
+  const ref = document.getElementById('referencia').value || 'COT-001';
+  const proyN = document.getElementById('proyNombre').value || 'Sin proyecto';
+  const notas = document.getElementById('notas').value;
+  const total = filas.reduce((s,f) => s + (parseFloat(f.cant)||0)*(parseFloat(f.precio)||0), 0);
+  const fecha = new Date().toLocaleDateString('es-MX', {day:'2-digit', month:'long', year:'numeric'});
+
+  const filasHTML = filas.map((f,i) => {
+    const sub = (parseFloat(f.cant)||0) * (parseFloat(f.precio)||0);
+    return `<tr>
+      <td>${i+1}</td>
+      <td>${f.desc || 'Sin descripción'}</td>
+      <td class="num">${parseFloat(f.cant)||1}</td>
+      <td class="num">$${Number(f.precio||0).toLocaleString('es-MX',{minimumFractionDigits:2})}</td>
+      <td class="num"><b>$${sub.toLocaleString('es-MX',{minimumFractionDigits:2})}</b></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="5" style="text-align:center;color:#999;padding:16px">Sin partidas</td></tr>';
+
+  const calcSections = buildCalcSections();
+  const calcBlock = calcSections ? `
+    <div style="margin-top:22px">
+      <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#888;font-weight:700;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #ffc400">
+        RESULTADOS DE CÁLCULO DEL PROYECTO
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px" class="doc-calcs">
+        ${calcSections}
+      </div>
+      <p style="font-size:10px;color:#999;margin-top:12px;font-style:italic">
+        Los valores presentados corresponden al último cálculo guardado de cada módulo para este proyecto.
+      </p>
+    </div>` : '';
+
+  document.getElementById('pdfBody').innerHTML = `
+    <div class="doc-preview">
+      <!-- Encabezado -->
+      <div class="doc-head">
+        <div class="brand">
+          <div class="logo">CUED Solutions</div>
+          <div class="sub">GI Electromecanica · Ingeniería Integral</div>
+          <div class="sub" style="margin-top:2px">Tijuana, Baja California, México</div>
+        </div>
+        <div class="cot-num">
+          <div class="ref">${ref}</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.6);margin-top:3px">COTIZACIÓN</div>
+          <div class="fecha">${fecha}</div>
+        </div>
+      </div>
+      <!-- Info cliente / proyecto -->
+      <div class="doc-info">
         <div>
-          <div style="font-size:22px;font-weight:800;color:#ffc400">CUED <span style="color:white">Solutions</span></div>
-          <div style="font-size:10px;color:rgba(255,255,255,0.5);margin-top:3px">GI Electromecanica S. de R.L. de C.V.</div>
-          <div style="font-size:10px;color:rgba(255,255,255,0.4)">C. Valle Redondo #23133, Ejido Francisco Villa, Tijuana B.C.</div>
-          <div style="font-size:10px;color:rgba(255,255,255,0.4)">Tel: (664) 211 8653 · RFC: GEL180306L22</div>
+          <div class="sec-title">Cliente</div>
+          <div class="sec-val">${cliente}</div>
+          ${clienteObj?.empresa ? `<div class="sec-sub">${clienteObj.empresa}</div>` : ''}
+          ${clienteObj?.rfc ? `<div class="sec-sub">RFC: ${clienteObj.rfc}</div>` : ''}
+          ${clienteObj?.telefono ? `<div class="sec-sub">Tel: ${clienteObj.telefono}</div>` : ''}
+          ${clienteObj?.direccion ? `<div class="sec-sub">${clienteObj.direccion}${clienteObj.ciudad?', '+clienteObj.ciudad:''}</div>` : ''}
         </div>
-        <div style="text-align:right">
-          <div style="font-size:20px;font-weight:800;color:#ffc400">COTIZACION</div>
-          <div style="font-size:13px;color:rgba(255,255,255,0.8)">${document.getElementById('cotNum').value}</div>
-          <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:4px">Fecha: ${fecha}</div>
-          <div style="font-size:10px;color:rgba(255,255,255,0.4)">Vigencia: ${document.getElementById('cotFecha').value}</div>
+        <div>
+          <div class="sec-title">Proyecto</div>
+          <div class="sec-val">${proyN}</div>
+          ${proy?.descripcion ? `<div class="sec-sub">${proy.descripcion}</div>` : ''}
+          <div class="sec-sub" style="margin-top:6px;color:rgba(255,255,255,.35)">Ref: ${ref}</div>
         </div>
       </div>
-    </div>
-    <div style="background:#f8f9fa;padding:16px 28px;border-bottom:3px solid #ffc400;display:grid;grid-template-columns:1fr 1fr;gap:16px">
-      <div>
-        <div style="font-size:9px;font-weight:700;color:#6c757d;letter-spacing:1px">CLIENTE</div>
-        <div style="font-size:15px;font-weight:700;margin-top:3px">${document.getElementById('pCliente').value||'—'}</div>
+      <!-- Partidas -->
+      <div class="doc-body">
+        <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#888;font-weight:700;margin-bottom:10px">PARTIDAS</div>
+        <table class="doc-table">
+          <thead><tr>
+            <th style="width:32px">#</th>
+            <th>Descripción</th>
+            <th style="width:70px;text-align:right">Cant.</th>
+            <th style="width:110px;text-align:right">P. Unit.</th>
+            <th style="width:120px;text-align:right">Subtotal</th>
+          </tr></thead>
+          <tbody>${filasHTML}</tbody>
+        </table>
+        <!-- Total -->
+        <div class="doc-total">
+          <div class="lbl">TOTAL DE LA COTIZACIÓN</div>
+          <div class="val">$${total.toLocaleString('es-MX',{minimumFractionDigits:2})}</div>
+        </div>
+        ${notas ? `<div style="background:#f5f5f5;border-left:3px solid #ffc400;padding:10px 14px;border-radius:4px;font-size:12px;color:#555;margin-bottom:18px"><b>Condiciones:</b> ${notas}</div>` : ''}
+        <!-- Cálculos del proyecto -->
+        ${calcBlock}
       </div>
-      <div>
-        <div style="font-size:9px;font-weight:700;color:#6c757d;letter-spacing:1px">PROYECTO</div>
-        <div style="font-size:15px;font-weight:700;margin-top:3px">${document.getElementById('pNombre').value||'—'}</div>
-        <div style="font-size:11px;color:#6c757d">${document.getElementById('pDir').value||''}</div>
+      <!-- Pie de página -->
+      <div class="doc-footer">
+        <p>CUED Solutions — GI Electromecanica — Tijuana, Baja California, México</p>
+        <p>Sistema de gestión de proyectos de ingeniería CUED v3</p>
       </div>
-    </div>
-    <div style="padding:20px 28px">
-      <table style="width:100%;border-collapse:collapse;font-size:12px">
-        <thead><tr style="background:#060e1a;color:white">
-          <th style="padding:9px 12px;text-align:left;font-size:9px;letter-spacing:1px;width:26px">#</th>
-          <th style="padding:9px 12px;text-align:left;font-size:9px;letter-spacing:1px">DESCRIPCION / PARTIDA</th>
-          <th style="padding:9px 12px;text-align:right;font-size:9px;letter-spacing:1px;width:56px">CANT.</th>
-          <th style="padding:9px 12px;text-align:right;font-size:9px;letter-spacing:1px;width:100px">P. UNIT.</th>
-          <th style="padding:9px 12px;text-align:right;font-size:9px;letter-spacing:1px;width:110px">SUBTOTAL</th>
-        </tr></thead>
-        <tbody>${rows.map((r,i)=>`<tr style="background:${i%2?'#f8f9fa':'white'}">
-          <td style="padding:9px 12px;color:#6c757d">${i+1}</td>
-          <td style="padding:9px 12px">${r.desc}</td>
-          <td style="padding:9px 12px;text-align:right">${r.q}</td>
-          <td style="padding:9px 12px;text-align:right">${f(r.p)}</td>
-          <td style="padding:9px 12px;text-align:right;font-weight:600">${f(r.s)}</td>
-        </tr>`).join('')}</tbody>
-      </table>
-    </div>
-    <div style="padding:0 28px 20px;display:flex;justify-content:flex-end">
-      <div style="min-width:260px">
-        <div style="display:flex;justify-content:space-between;padding:7px 0;font-size:12px;color:#6c757d;border-bottom:1px solid #e9ecef"><span>Subtotal</span><span>${f(sub)}</span></div>
-        <div style="display:flex;justify-content:space-between;padding:7px 0;font-size:12px;color:#6c757d;border-bottom:1px solid #e9ecef"><span>IVA (${ivap}%)</span><span>${f(iva)}</span></div>
-        <div style="display:flex;justify-content:space-between;padding:12px 14px;font-size:17px;font-weight:800;background:#ffc400;border-radius:8px;margin-top:8px"><span>TOTAL ${mon}</span><span>${f(total)}</span></div>
-      </div>
-    </div>
-    ${document.getElementById('notas').value?`<div style="margin:0 28px 20px;padding:14px;background:#f8f9fa;border-radius:8px;border-left:4px solid #ffc400">
-      <div style="font-size:9px;font-weight:700;color:#6c757d;letter-spacing:1px;margin-bottom:6px">NOTAS Y CONDICIONES</div>
-      <div style="font-size:11px;color:#495057;white-space:pre-line">${document.getElementById('notas').value}</div>
-    </div>`:''}
-    <div style="padding:14px 28px;background:#f8f9fa;border-top:1px solid #e9ecef;text-align:center;font-size:10px;color:#6c757d">
-      Documento generado por CUED Solutions — Sistema de Instalaciones Electromecanicas · ${fecha}
-    </div>
-  </div>`;
+    </div>`;
 
-  document.getElementById('pdfPrev').innerHTML=html;
-  document.getElementById('pdfOv').classList.add('show');
+  document.getElementById('pdfModal').classList.add('open');
 }
 
-function cerrarPDF(){document.getElementById('pdfOv').classList.remove('show');}
+function cerrarPreview() {
+  document.getElementById('pdfModal').classList.remove('open');
+}
 
-// ── Descargar PDF ──────────────────────────────────────────────────────
-async function descargarPDF(){
-  const {jsPDF}=window.jspdf;
-  const doc=new jsPDF({orientation:'p',unit:'mm',format:'a4'});
-  const rows=getRows();
-  const ivap=parseFloat(document.getElementById('iva').value)||0;
-  const sub=rows.reduce((a,r)=>a+r.s,0);
-  const iva=sub*ivap/100;
-  const total=sub+iva;
-  const mon=document.getElementById('moneda').value;
-  const f=n=>new Intl.NumberFormat('es-MX',{style:'currency',currency:mon}).format(n);
-  const fecha=new Date().toLocaleDateString('es-MX');
+// ── Descarga PDF desde la vista previa ─────────────────
+async function descargarPDF() {
+  const {jsPDF} = window.jspdf;
+  const doc = new jsPDF({orientation:'portrait', unit:'mm', format:'letter'});
 
-  // HEADER
-  doc.setFillColor(6,14,26); doc.rect(0,0,210,38,'F');
-  doc.setFillColor(255,196,0); doc.rect(0,36,210,3,'F');
+  const cliente  = getClienteTexto();
+  const ref      = document.getElementById('referencia').value || 'COT-001';
+  const proyN    = document.getElementById('proyNombre').value || 'Sin proyecto';
+  const notas    = document.getElementById('notas').value;
+  const total    = filas.reduce((s,f) => s+(parseFloat(f.cant)||0)*(parseFloat(f.precio)||0), 0);
+  const fecha    = new Date().toLocaleDateString('es-MX', {day:'2-digit', month:'long', year:'numeric'});
+
+  // ─ Encabezado
+  doc.setFillColor(6,14,26); doc.rect(0,0,216,42,'F');
   doc.setTextColor(255,196,0); doc.setFontSize(20); doc.setFont('helvetica','bold');
-  doc.text('CUED Solutions',13,16);
-  doc.setTextColor(255,255,255); doc.setFontSize(7.5); doc.setFont('helvetica','normal');
-  doc.text('GI Electromecanica S. de R.L. de C.V. · RFC: GEL180306L22',13,21);
-  doc.text('C. Valle Redondo #23133, Ejido Francisco Villa, Tijuana, B.C.',13,25);
-  doc.text('Tel: (664) 211 8653',13,29);
-  doc.setTextColor(255,196,0); doc.setFontSize(16); doc.setFont('helvetica','bold');
-  doc.text('COTIZACION',197,14,{align:'right'});
-  doc.setFontSize(10); doc.setTextColor(255,255,255); doc.setFont('helvetica','normal');
-  doc.text(document.getElementById('cotNum').value,197,20,{align:'right'});
-  doc.setFontSize(7.5);
-  doc.text('Fecha: '+fecha,197,25,{align:'right'});
-  doc.text('Vigencia: '+document.getElementById('cotFecha').value,197,29,{align:'right'});
+  doc.text('CUED Solutions',14,16);
+  doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(180,180,180);
+  doc.text('GI Electromecanica · Ingeniería Integral · Tijuana, B.C., México',14,23);
+  doc.text('Ing. Eléctrica · Hidrosanitaria · HVAC · Gas · Incendios · Pluvial',14,29);
+  doc.setTextColor(255,196,0); doc.setFontSize(14); doc.setFont('helvetica','bold');
+  doc.text(ref, 202,14, {align:'right'});
+  doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(180,180,180);
+  doc.text('COTIZACIÓN',202,20,{align:'right'});
+  doc.text(fecha,202,26,{align:'right'});
 
-  // DATOS CLIENTE
-  doc.setFillColor(248,249,250); doc.rect(0,40,210,20,'F');
-  doc.setTextColor(108,117,125); doc.setFontSize(7); doc.setFont('helvetica','bold');
-  doc.text('CLIENTE',13,47); doc.text('PROYECTO',110,47);
-  doc.setTextColor(26,26,46); doc.setFontSize(11); doc.setFont('helvetica','bold');
-  doc.text(document.getElementById('pCliente').value||'—',13,53);
-  doc.text(document.getElementById('pNombre').value||'—',110,53);
-  doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(108,117,125);
-  doc.text(document.getElementById('pDir').value||'',110,57);
+  // ─ Info cliente/proyecto
+  doc.setFillColor(20,42,75); doc.rect(0,43,216,30,'F');
+  doc.setTextColor(255,196,0); doc.setFontSize(7); doc.setFont('helvetica','bold');
+  doc.text('CLIENTE',14,51); doc.text('PROYECTO',114,51);
+  doc.setFont('helvetica','normal'); doc.setTextColor(255,255,255); doc.setFontSize(11);
+  doc.text(cliente,14,58); doc.text(proyN,114,58);
+  doc.setFontSize(8); doc.setTextColor(160,160,160);
+  if (clienteObj?.empresa)   doc.text(clienteObj.empresa,14,64);
+  if (clienteObj?.rfc)       doc.text('RFC: '+clienteObj.rfc,14,69);
+  if (clienteObj?.telefono)  doc.text('Tel: '+clienteObj.telefono,14,74);
+  if (proy?.descripcion)     doc.text(proy.descripcion,114,64);
 
-  // TABLA
-  let y=70;
-  doc.setFillColor(6,14,26); doc.rect(0,y-5,210,7.5,'F');
-  doc.setTextColor(255,255,255); doc.setFontSize(6.5); doc.setFont('helvetica','bold');
-  doc.text('#',13,y-0.5);
-  doc.text('DESCRIPCION / PARTIDA',19,y-0.5);
-  doc.text('CANT.',138,y-0.5,{align:'right'});
-  doc.text('P. UNIT.',162,y-0.5,{align:'right'});
-  doc.text('SUBTOTAL',197,y-0.5,{align:'right'});
-  y+=4;
+  // ─ Tabla de partidas
+  let y = 80;
+  doc.setFillColor(255,196,0); doc.rect(10,y,196,8,'F');
+  doc.setTextColor(6,14,26); doc.setFontSize(8); doc.setFont('helvetica','bold');
+  doc.text('#',13,y+5.5);
+  doc.text('DESCRIPCIÓN DEL TRABAJO',22,y+5.5);
+  doc.text('CANT.',148,y+5.5,{align:'right'});
+  doc.text('P. UNIT.',170,y+5.5,{align:'right'});
+  doc.text('SUBTOTAL',202,y+5.5,{align:'right'});
+  y += 9;
 
-  rows.forEach((r,i)=>{
-    i%2===0?doc.setFillColor(255,255,255):doc.setFillColor(248,249,250);
-    const lines=doc.splitTextToSize(r.desc,113);
-    const rowH=Math.max(7,lines.length*4.5+3);
-    doc.rect(0,y-3.5,210,rowH,'F');
-    doc.setTextColor(108,117,125); doc.setFontSize(7.5); doc.setFont('helvetica','normal');
-    doc.text(String(i+1),13,y);
-    doc.setTextColor(26,26,46);
-    doc.text(lines,19,y);
-    doc.text(String(r.q),138,y,{align:'right'});
-    doc.text(f(r.p),162,y,{align:'right'});
+  filas.forEach((f,i) => {
+    const sub = (parseFloat(f.cant)||0)*(parseFloat(f.precio)||0);
+    doc.setFillColor(i%2===0?245:255,i%2===0?248:255,i%2===0?255:255);
+    doc.rect(10,y-4,196,8,'F');
+    doc.setTextColor(30,30,30); doc.setFont('helvetica','normal'); doc.setFontSize(9);
+    doc.text(String(i+1),13,y+1);
+    const desc = (f.desc||'Sin descripción').substring(0,70);
+    doc.text(desc,22,y+1);
+    doc.text(String(parseFloat(f.cant)||1),148,y+1,{align:'right'});
+    doc.text('$'+Number(f.precio||0).toLocaleString('es-MX',{minimumFractionDigits:2}),170,y+1,{align:'right'});
     doc.setFont('helvetica','bold');
-    doc.text(f(r.s),197,y,{align:'right'});
-    doc.setFont('helvetica','normal');
-    y+=rowH;
-    if(y>268){doc.addPage();y=20;}
+    doc.text('$'+sub.toLocaleString('es-MX',{minimumFractionDigits:2}),202,y+1,{align:'right'});
+    y += 8;
+    if (y > 230) { doc.addPage(); y = 20; }
   });
 
-  // TOTALES
-  y+=6;
-  doc.setDrawColor(233,236,239); doc.line(120,y,197,y); y+=5;
-  doc.setFontSize(8.5); doc.setTextColor(108,117,125); doc.setFont('helvetica','normal');
-  doc.text('Subtotal:',123,y); doc.text(f(sub),197,y,{align:'right'}); y+=6;
-  doc.text(`IVA (${ivap}%):`,123,y); doc.text(f(iva),197,y,{align:'right'}); y+=3;
-  doc.line(120,y,197,y); y+=4;
-  doc.setFillColor(255,196,0); doc.roundedRect(120,y-3,80,9,2,2,'F');
-  doc.setTextColor(26,26,46); doc.setFont('helvetica','bold'); doc.setFontSize(9.5);
-  doc.text('TOTAL '+mon+':',124,y+2.5);
-  doc.text(f(total),196,y+2.5,{align:'right'}); y+=14;
+  // ─ Total
+  y += 4;
+  doc.setFillColor(6,14,26); doc.rect(10,y,196,12,'F');
+  doc.setTextColor(255,196,0); doc.setFontSize(12); doc.setFont('helvetica','bold');
+  doc.text('TOTAL:',155,y+8);
+  doc.text('$'+total.toLocaleString('es-MX',{minimumFractionDigits:2}),202,y+8,{align:'right'});
+  y += 18;
 
-  // NOTAS
-  const notas=document.getElementById('notas').value;
-  if(notas&&y<255){
-    doc.setFillColor(248,249,250); doc.rect(13,y-3,184,3,'F');
-    doc.setTextColor(108,117,125); doc.setFontSize(6.5); doc.setFont('helvetica','bold');
-    doc.text('NOTAS Y CONDICIONES',13,y); y+=5;
-    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(73,80,87);
-    doc.text(doc.splitTextToSize(notas,184),13,y);
+  // ─ Notas
+  if (notas) {
+    doc.setDrawColor(255,196,0); doc.setLineWidth(0.5); doc.line(10,y,206,y);
+    y += 5;
+    doc.setTextColor(80,80,80); doc.setFontSize(8); doc.setFont('helvetica','italic');
+    doc.text('Condiciones: '+notas,14,y);
+    y += 8;
   }
 
-  // PIE
-  doc.setFillColor(248,249,250); doc.rect(0,283,210,14,'F');
-  doc.setFontSize(6.5); doc.setTextColor(108,117,125); doc.setFont('helvetica','normal');
-  doc.text('Documento generado por CUED Solutions — Sistema de Instalaciones Electromecanicas',105,290,{align:'center'});
-  doc.text(`Cotizacion ${document.getElementById('cotNum').value} · ${fecha}`,105,294,{align:'center'});
+  // ─ Sección de cálculos del proyecto
+  if (Object.keys(calcData).length > 0) {
+    if (y > 210) { doc.addPage(); y = 20; }
+    doc.setFillColor(255,196,0); doc.rect(10,y,196,7,'F');
+    doc.setTextColor(6,14,26); doc.setFontSize(8); doc.setFont('helvetica','bold');
+    doc.text('RESULTADOS DE CÁLCULO DEL PROYECTO',14,y+4.5);
+    y += 10;
 
-  doc.save(`Cotizacion_${document.getElementById('cotNum').value}.pdf`);
+    const labels = {
+      electrico:'Cálculo Eléctrico',hidraulico:'Hidráulico',cisterna:'Cisterna',
+      hvac:'HVAC',incendios:'Contra Incendios',gas_lp:'Gas LP',
+      gas:'Gas / Aire',sanitario:'Sanitario (UM)',pluvial:'Pluvial',
+      motores:'Motores',caida:'Caída de Tensión',
+    };
+    const campos = {
+      electrico: [['Carga','carga','W'],['Voltaje','voltaje','V'],['Sistema','fases','Φ'],['Corriente','corriente','A'],['Calibre','awg',''],['Protección','breaker',''],['Conduit','conduit','']],
+      hidraulico:[['Gasto','gasto','L/min'],['Longitud','longitud','m'],['Diámetro','diametro',''],['Velocidad','velocidad',''],['Bomba','bomba','']],
+      cisterna:  [['Dotación diaria','dotacion_total_lt','L/día'],['Días almac.','dias_almacenamiento','días'],['Volumen','volumen_m3','m³']],
+      hvac:      [['Área','area','m²'],['Personas','personas',''],['Capacidad','tons','TR'],['BTU/hr','btu',''],['Consumo','consumo_kw','kW']],
+      incendios: [['Ancho','ancho','m'],['Largo','largo','m'],['Rociadores','rociadores','pzas'],['Tub. ramal','tuberia_ramal','m'],['Tub. principal','tuberia_principal','m']],
+      gas_lp:    [['Consumo','consumo_m3hr','m³/hr'],['Consumo','consumo_mjhr','MJ/hr'],['Aparatos','aparatos_activos','']],
+      gas:       [['Tipo','tipo_gas',''],['Consumo','consumo','MJ/hr'],['Longitud','longitud','m'],['Diámetro','diametro',''],['Caudal','caudal','']],
+      sanitario: [['Total UM','total_um','UM'],['Gasto punta','gasto_punta','L/s'],['Ø Principal','diametro_principal',''],['Bajante','bajante_sanitaria','']],
+      pluvial:   [['Ancho','ancho','m'],['Largo','largo','m'],['Gasto','gasto_ls','L/s'],['Canalón','ancho_canalon_in','"'],['Bajante','bajante_dim',''],['Calibre','calibre','']],
+      motores:   [['Potencia','hp','HP'],['Tensión','tension','V'],['Corriente FLA','corriente','A'],['Calibre','calibre',''],['Protección','proteccion','']],
+      caida:     [['Calibre','calibre','AWG'],['Longitud','longitud','m'],['Tensión','tension','V'],['Corriente','corriente','A'],['Caída e%','epct','%'],['Estado','estado','']],
+    };
+
+    let col = 0;
+    const colW = 93, startX = [14, 113];
+
+    for (const [key, data] of Object.entries(calcData)) {
+      const cfgs = campos[key]; if (!cfgs) continue;
+      const lbl = labels[key] || key;
+      const x = startX[col];
+
+      if (y > 230) { doc.addPage(); y = 20; }
+
+      // Encabezado del bloque
+      doc.setFillColor(20,42,75); doc.rect(x,y,colW,6,'F');
+      doc.setTextColor(255,196,0); doc.setFontSize(7); doc.setFont('helvetica','bold');
+      doc.text(lbl.toUpperCase(),x+2,y+4.2);
+      let ry = y + 8;
+
+      cfgs.forEach(([label, field, unit], ri) => {
+        const val = data[field];
+        if (val === undefined || val === null || val === '') return;
+        doc.setFillColor(ri%2===0?245:255,ri%2===0?247:255,ri%2===0?255:255);
+        doc.rect(x,ry-3.5,colW,6,'F');
+        doc.setTextColor(80,80,80); doc.setFontSize(8); doc.setFont('helvetica','normal');
+        doc.text(label+':',x+2,ry);
+        doc.setTextColor(20,20,20); doc.setFont('helvetica','bold');
+        doc.text(String(val)+(unit?' '+unit:''),x+colW-2,ry,{align:'right'});
+        ry += 6;
+      });
+
+      col++;
+      if (col >= 2) { col = 0; y = Math.max(y, ry) + 6; }
+      else y = Math.max(y, ry);
+    }
+  }
+
+  // ─ Pie de página
+  const pgs = doc.getNumberOfPages();
+  for (let i = 1; i <= pgs; i++) {
+    doc.setPage(i);
+    doc.setFillColor(6,14,26); doc.rect(0,270,216,17,'F');
+    doc.setTextColor(120,120,120); doc.setFontSize(7); doc.setFont('helvetica','normal');
+    doc.text('CUED Solutions — GI Electromecanica — Tijuana, Baja California, México',108,278,{align:'center'});
+    doc.text('Página '+i+' de '+pgs,202,278,{align:'right'});
+    doc.text('Sistema CUED v3 — Ingeniería de proyectos',14,278);
+  }
+
+  doc.save('Cotizacion_'+ref+'_'+cliente.replace(/\s+/g,'_').substring(0,20)+'.pdf');
+  toast('PDF descargado');
 }
 
-renderMods(); recalc();
+// ── Partidas iniciales desde módulos del proyecto ───────
+function cargarParticiasIniciales() {
+  if (proy) {
+    const mods = JSON.parse(proy.modulos || '[]');
+    const items = {
+      electrico:  'Instalación eléctrica — tablero, alimentadores y circuitos derivados',
+      hidraulico: 'Instalación hidráulica — red de agua potable interior',
+      cisterna:   'Cisterna de concreto / prefabricada con instalación hidráulica',
+      hvac:       'Sistema de climatización — suministro, instalación y conexión eléctrica',
+      incendios:  'Sistema contra incendios NFPA 13 — rociadores, tubería y accesorios',
+      gas_lp:     'Instalación de gas LP — red, válvulas y conexión a aparatos',
+      gas:        'Instalación de gas / aire comprimido — red y accesorios',
+      sanitario:  'Instalación sanitaria — red de drenaje, muebles y bajantes',
+      pluvial:    'Sistema pluvial — canalones, bajantes y conexión al drenaje',
+      motores:    'Suministro e instalación de motores y arrancadores',
+      caida:      'Optimización de calibres por caída de tensión',
+      cuadros:    'Cuadros de carga y tableros de distribución',
+    };
+    let added = false;
+    mods.forEach(k => { if (items[k]) { agregarFila(items[k], 1, 0); added = true; } });
+    if (!added) agregarFila('', 1, 0);
+  } else {
+    agregarFila('', 1, 0);
+  }
+}
+
+// Cerrar modal al click afuera
+document.getElementById('pdfModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('pdfModal')) cerrarPreview();
+});
+
+// ── Init ────────────────────────────────────────────────
+cargarClientes();
+cargarHist();
+cargarParticasIniciales();
+
+// alias por typo en llamada
+function cargarParticasIniciales() { cargarParticiasIniciales(); }
 </script>
 </body>
 </html>

@@ -1,205 +1,170 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CUED - Motores Trifásicos</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CUED - Motores</title>
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
-.calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
-.result-card{background:#0f1f38;border:1px solid rgba(0,212,255,0.15);border-radius:16px;padding:28px;text-align:center;}
-.result-big{font-family:'Rajdhani',sans-serif;font-size:64px;font-weight:700;color:#00d4ff;line-height:1;}
-.hist-scroll{max-height:240px;overflow-y:auto;}
-.arranc-badge{display:inline-block;padding:8px 20px;border-radius:10px;font-size:14px;font-weight:700;margin-top:10px;}
-.arranc-directo{background:rgba(0,255,153,0.1);color:#00ff99;border:1px solid rgba(0,255,153,0.3);}
-.arranc-estrella{background:rgba(255,196,0,0.1);color:#ffc400;border:1px solid rgba(255,196,0,0.3);}
-.arranc-variador{background:rgba(0,212,255,0.1);color:#00d4ff;border:1px solid rgba(0,212,255,0.3);}
+.cg{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.rc{background:#0f1f38;border:1px solid rgba(0,212,255,.18);border-radius:13px;padding:26px;text-align:center;}
+.rb{font-family:'Rajdhani',sans-serif;font-size:66px;font-weight:700;color:#5fa8ff;line-height:1;}
+.hi{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:7px;font-size:12px;border-bottom:1px solid var(--border);transition:background .15s;}
+.hi:last-child{border:none;}.hi:hover{background:rgba(255,255,255,.03);}
+.hi-del{opacity:0;transition:opacity .15s;margin-left:auto;flex-shrink:0;}
+.hi:hover .hi-del{opacity:1;}
 </style>
 </head>
 <body>
 <div id="sidebar-container"></div>
-
 <div class="main">
-    <div class="page-header">
-        <div class="page-title">
-            <h1><i class="fa fa-gear" style="color:#ffc400;margin-right:10px"></i>Motores Trifásicos</h1>
-            <p>Selección de calibre, protección y arrancador según HP.</p>
-        </div>
+  <div class="ph">
+    <div class="ph-left">
+      <h1><i class="fa fa-gear" style="color:var(--gold);margin-right:8px"></i>Cálculo de Motores</h1>
+      <p>Corriente nominal, calibre y protección — NEC 430.250 / NOM.</p>
     </div>
-
-    <div class="calc-grid">
-        <div class="card">
-            <h3>Parámetros del Motor</h3>
-
-            <label>Potencia del motor (HP)</label>
-            <select id="hp">
-                <option value="0.5">0.5 HP</option><option value="0.75">0.75 HP</option>
-                <option value="1">1 HP</option><option value="1.5">1.5 HP</option>
-                <option value="2">2 HP</option><option value="3">3 HP</option>
-                <option value="5" selected>5 HP</option><option value="7.5">7.5 HP</option>
-                <option value="10">10 HP</option><option value="15">15 HP</option>
-                <option value="20">20 HP</option><option value="25">25 HP</option>
-                <option value="30">30 HP</option><option value="40">40 HP</option>
-                <option value="50">50 HP</option><option value="60">60 HP</option>
-                <option value="75">75 HP</option><option value="100">100 HP</option>
-                <option value="125">125 HP</option><option value="150">150 HP</option>
-                <option value="200">200 HP</option>
-            </select>
-
-            <label>Tensión de alimentación (V)</label>
-            <select id="tension">
-                <option value="220" selected>220 V</option>
-                <option value="440">440 V</option>
-                <option value="480">480 V</option>
-            </select>
-
-            <label>Factor de servicio</label>
-            <select id="fs">
-                <option value="1.0">1.0 (Normal)</option>
-                <option value="1.15" selected>1.15 (Estándar)</option>
-                <option value="1.25">1.25 (Alta demanda)</option>
-            </select>
-
-            <label>Tipo de arranque</label>
-            <select id="arranque">
-                <option value="directo">Directo (hasta 10 HP)</option>
-                <option value="estrella_triangulo">Estrella-Triángulo (10-50 HP)</option>
-                <option value="variador">Variador de frecuencia (VFD)</option>
-            </select>
-
-            <div style="margin-top:24px;display:flex;gap:12px;">
-                <button class="btn-primary" onclick="calcular()" style="flex:1">
-                    <i class="fa fa-calculator"></i> Calcular
-                </button>
-                <button class="btn-secondary" id="btnGuardar" onclick="guardar()">
-                    <i class="fa fa-save"></i> Guardar
-                </button>
-            </div>
-            <div id="alertSuccess" class="alert-success" style="margin-top:12px;display:none">
-                <i class="fa fa-circle-check"></i> Guardado en Supabase
-            </div>
-            <div id="alertError" class="alert-error" style="margin-top:12px;display:none">
-                <i class="fa fa-circle-xmark"></i> Error al guardar
-            </div>
-        </div>
-
-        <div class="result-card">
-            <div class="result-label">Corriente Nominal</div>
-            <div class="result-big" id="corriente">— <span style="font-size:24px">A</span></div>
-            <div id="arrancBadge" class="arranc-badge arranc-directo">Arranque Directo</div>
-
-            <div class="mini-cards" style="margin-top:24px">
-                <div class="mini-card"><div class="mini-label">Calibre Mínimo</div><div class="mini-val" id="calibre">—</div></div>
-                <div class="mini-card"><div class="mini-label">Protección</div><div class="mini-val" id="proteccion">—</div></div>
-                <div class="mini-card"><div class="mini-label">Potencia (kW)</div><div class="mini-val" id="kw">—</div></div>
-                <div class="mini-card"><div class="mini-label">Contactores</div><div class="mini-val" id="contactores">—</div></div>
-            </div>
-        </div>
+    <div class="ph-right">
+      <button class="btn btn-d" onclick="limpiar()"><i class="fa fa-eraser"></i> Limpiar todo</button>
     </div>
-
-    <div class="card" style="margin-top:24px">
-        <h3>Historial de Cálculos</h3>
-        <div class="hist-scroll" id="historial">
-            <div class="empty-state">Cargando historial...</div>
-        </div>
+  </div>
+  <div class="cg">
+    <div class="card">
+      <div class="card-t"><i class="fa fa-sliders"></i> Parámetros del motor</div>
+      <span class="flabel">Potencia del motor (HP)</span>
+      <select id="hp">
+        <option value="0.5">0.5 HP</option><option value="0.75">0.75 HP</option>
+        <option value="1">1 HP</option><option value="1.5">1.5 HP</option>
+        <option value="2">2 HP</option><option value="3" selected>3 HP</option>
+        <option value="5">5 HP</option><option value="7.5">7.5 HP</option>
+        <option value="10">10 HP</option><option value="15">15 HP</option>
+        <option value="20">20 HP</option><option value="25">25 HP</option>
+        <option value="30">30 HP</option><option value="40">40 HP</option>
+        <option value="50">50 HP</option><option value="60">60 HP</option>
+        <option value="75">75 HP</option><option value="100">100 HP</option>
+      </select>
+      <span class="flabel">Tensión del sistema (V)</span>
+      <select id="tension">
+        <option value="220" selected>220 V — Trifásico</option>
+        <option value="440">440 V — Trifásico</option>
+        <option value="480">480 V — NEC</option>
+        <option value="127">127 V — Monofásico</option>
+      </select>
+      <span class="flabel">Tipo de arranque</span>
+      <select id="arranque">
+        <option value="directo" selected>Directo (DOL)</option>
+        <option value="estrella_triangulo">Estrella-Triángulo</option>
+        <option value="suave">Arrancador suave</option>
+        <option value="variador">Variador de frecuencia (VFD)</option>
+      </select>
+      <span class="flabel">Factor de servicio</span>
+      <select id="fs">
+        <option value="1.0">1.0 — Sin factor</option>
+        <option value="1.15" selected>1.15 — NEC estándar</option>
+        <option value="1.25">1.25 — Servicio continuo</option>
+      </select>
+      <div style="display:flex;gap:9px;margin-top:18px">
+        <button class="btn btn-p" onclick="calcular()" style="flex:1"><i class="fa fa-calculator"></i> Calcular</button>
+        <button class="btn btn-s" id="btnG" onclick="guardar()"><i class="fa fa-save"></i> Guardar</button>
+      </div>
+      <div id="aok" class="a-ok" style="margin-top:10px"><i class="fa fa-circle-check"></i> Guardado en Supabase</div>
+      <div id="aerr" class="a-err" style="margin-top:10px"><i class="fa fa-circle-xmark"></i> Error al guardar</div>
     </div>
+    <div class="rc">
+      <div class="rl">Corriente de Plena Carga</div>
+      <div class="rb" id="corriente">—<span style="font-size:22px;opacity:.5"> A</span></div>
+      <div class="mc-grid" style="margin-top:22px">
+        <div class="mc"><div class="mc-l">kW</div><div class="mc-v" id="kw">—</div></div>
+        <div class="mc"><div class="mc-l">Calibre</div><div class="mc-v" id="calibre">—</div></div>
+        <div class="mc"><div class="mc-l">Protección</div><div class="mc-v" id="proteccion">—</div></div>
+        <div class="mc"><div class="mc-l">Arranque</div><div class="mc-v" id="tipoArranque">—</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:18px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div class="card-t" style="margin:0"><i class="fa fa-clock-rotate-left"></i> Historial</div>
+      <button class="btn btn-d" style="padding:6px 12px;font-size:12px" onclick="borrarTodo()"><i class="fa fa-trash"></i> Borrar todo</button>
+    </div>
+    <div class="hs" id="hist"><div class="empty">Cargando historial...</div></div>
+  </div>
 </div>
-
 <script src="config.js"></script>
 <script src="sidebar.js"></script>
 <script>
-document.getElementById('sidebar-container').innerHTML = renderSidebar('motores');
-
-const SB_URL = 'https://tazheiutbleaexmcsopy.supabase.co/rest/v1';
-const SB_KEY = 'sb_publishable_i5hoZ9cKYlksVhpMcee_-Q_LQes-FOK';
-const HEADERS = { 'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=representation' };
-
-const I_220 = {0.5:2.2,0.75:3.2,1:4.2,1.5:6.0,2:6.8,3:9.6,5:15.2,7.5:22,10:28,15:42,20:54,25:68,30:80,40:104,50:130,60:154,75:192,100:248,125:312,150:360,200:480};
-const I_440 = {0.5:1.1,0.75:1.6,1:2.1,1.5:3.0,2:3.4,3:4.8,5:7.6,7.5:11,10:14,15:21,20:27,25:34,30:40,40:52,50:65,60:77,75:96,100:124,125:156,150:180,200:240};
-const I_480 = {0.5:1.0,0.75:1.5,1:2.0,1.5:2.8,2:3.2,3:4.6,5:7.2,7.5:10.4,10:13.6,15:20,20:26,25:32,30:38,40:49,50:62,60:73,75:90,100:116,125:145,150:169,200:225};
-
-function getCalibr(I) {
-    if(I<=20) return '12 AWG'; if(I<=30) return '10 AWG'; if(I<=40) return '8 AWG';
-    if(I<=55) return '6 AWG';  if(I<=70) return '4 AWG';  if(I<=85) return '3 AWG';
-    if(I<=115) return '2 AWG'; if(I<=130) return '1 AWG'; if(I<=150) return '1/0 AWG';
-    if(I<=175) return '2/0 AWG'; if(I<=200) return '3/0 AWG'; if(I<=230) return '4/0 AWG';
-    if(I<=255) return '250 kcmil'; if(I<=285) return '300 kcmil';
-    if(I<=310) return '350 kcmil'; if(I<=335) return '400 kcmil'; return '500 kcmil';
+initSidebar('motores');
+const TABLA='calculos_motores';
+let uc=null;
+// Tabla NEC 430.250 — corriente plena carga motores trifásicos (A) por HP y voltaje
+const NEC_430={220:{0.5:2.2,0.75:3.2,1:4.2,1.5:6,2:7.8,3:11,5:17.5,7.5:25.3,10:33,15:48,20:62,25:78,30:93,40:120,50:150,60:177,75:221,100:285},440:{0.5:1.1,0.75:1.6,1:2.1,1.5:3,2:3.9,3:5.5,5:8.8,7.5:12.6,10:16.5,15:24,20:31,25:39,30:46,40:60,50:75,60:88,75:110,100:143},480:{0.5:1.0,0.75:1.4,1:1.9,1.5:2.7,2:3.4,3:4.8,5:7.6,7.5:11,10:14,15:21,20:27,25:34,30:40,40:52,50:65,60:77,75:96,100:124},127:{0.5:4,0.75:5.8,1:7.2,1.5:10,2:13,3:18,5:30,7.5:44,10:58}};
+function calcular(){
+  const hp=parseFloat(document.getElementById('hp').value);
+  const tension=parseFloat(document.getElementById('tension').value);
+  const arranque=document.getElementById('arranque').value;
+  const fs=parseFloat(document.getElementById('fs').value);
+  const tabla=NEC_430[tension]||NEC_430[220];
+  let I=tabla[hp]||(hp*746/(tension*Math.sqrt(3)*0.85));
+  I*=fs;
+  const kw=(hp*0.7457).toFixed(2);
+  let calibre='14 AWG';
+  if(I>15)calibre='12 AWG';if(I>20)calibre='10 AWG';if(I>30)calibre='8 AWG';
+  if(I>40)calibre='6 AWG';if(I>55)calibre='4 AWG';if(I>70)calibre='2 AWG';
+  if(I>95)calibre='1/0 AWG';if(I>125)calibre='2/0 AWG';if(I>150)calibre='3/0 AWG';if(I>200)calibre='4/0 AWG';
+  // Protección NEC 430.52 — máximo 250% para arranque directo
+  const pctProt=arranque==='directo'?2.5:arranque==='estrella_triangulo'?1.5:2.0;
+  const Iprot=I*pctProt;
+  const bvList=[15,20,25,30,40,50,60,70,80,90,100,125,150,175,200,225,250,300,350,400];
+  const bv=bvList.find(b=>b>=Iprot)||400;
+  const arr={directo:'DOL',estrella_triangulo:'Y-Δ',suave:'Suave',variador:'VFD'};
+  document.getElementById('corriente').innerHTML=I.toFixed(2)+'<span style="font-size:22px;opacity:.5"> A</span>';
+  document.getElementById('kw').textContent=kw+' kW';
+  document.getElementById('calibre').textContent=calibre;
+  document.getElementById('proteccion').textContent='1x'+bv+'A';
+  document.getElementById('tipoArranque').textContent=arr[arranque]||arranque;
+  const p=getProyecto();
+  uc={hp,tension,arranque,factor_servicio:fs,corriente:I.toFixed(2),kw,calibre,proteccion:'1x'+bv+'A',proyecto_id:p?.id||null};
 }
-
-function getBreaker(I) {
-    const stds = [15,20,25,30,40,50,60,70,80,90,100,125,150,175,200,225,250,300,350,400,450,500,600];
-    return stds.find(b=>b>=I) || 600;
+function limpiar(){
+  document.getElementById('hp').selectedIndex=5;document.getElementById('tension').selectedIndex=0;
+  document.getElementById('arranque').selectedIndex=0;document.getElementById('fs').selectedIndex=1;
+  document.getElementById('corriente').innerHTML='—<span style="font-size:22px;opacity:.5"> A</span>';
+  ['kw','calibre','proteccion','tipoArranque'].forEach(id=>document.getElementById(id).textContent='—');
+  uc=null;toast('Formulario limpiado');
 }
-
-let ultimoCalculo = null;
-
-function calcular() {
-    const hp       = parseFloat(document.getElementById('hp').value);
-    const tension  = parseInt(document.getElementById('tension').value);
-    const fs       = parseFloat(document.getElementById('fs').value);
-    const arranque = document.getElementById('arranque').value;
-
-    const tabla = tension===220 ? I_220 : tension===440 ? I_440 : I_480;
-    const Inom  = (tabla[hp] || hp*1.5) * fs;
-    const Id    = Inom * 1.25;
-    const kw    = (hp * 0.746).toFixed(2);
-
-    const calibre    = getCalibr(Id);
-    const proteccion = getBreaker(Id * 2.5);
-
-    let arrancStr, arrancCls, contactores;
-    if(arranque==='directo')           { arrancStr='Arranque Directo';    arrancCls='arranc-directo';  contactores='1 Contactor'; }
-    else if(arranque==='estrella_triangulo') { arrancStr='Estrella-Triángulo'; arrancCls='arranc-estrella'; contactores='3 Contactores'; }
-    else                               { arrancStr='Variador de Frecuencia'; arrancCls='arranc-variador'; contactores='VFD'; }
-
-    document.getElementById('corriente').innerHTML = Inom.toFixed(1)+' <span style="font-size:24px">A</span>';
-    const badge = document.getElementById('arrancBadge');
-    badge.textContent = arrancStr; badge.className = 'arranc-badge ' + arrancCls;
-    document.getElementById('calibre').textContent    = calibre;
-    document.getElementById('proteccion').textContent = proteccion+'A';
-    document.getElementById('kw').textContent         = kw+' kW';
-    document.getElementById('contactores').textContent= contactores;
-
-    ultimoCalculo = { hp, tension, factor_servicio:fs, arranque, corriente:Inom.toFixed(1), calibre, proteccion:proteccion+'A', kw };
+async function guardar(){
+  if(!uc){calcular();}if(!uc)return;
+  const btn=document.getElementById('btnG');btn.disabled=true;btn.innerHTML='<i class="fa fa-spinner fa-spin"></i>';
+  try{await sbFetch(TABLA,{method:'POST',body:uc});toast('Guardado');showA('aok');cargarHist();}
+  catch(e){toast('Error','err');showA('aerr');}
+  finally{btn.disabled=false;btn.innerHTML='<i class="fa fa-save"></i> Guardar';}
 }
-
-async function guardar() {
-    if(!ultimoCalculo) calcular();
-    const btn = document.getElementById('btnGuardar');
-    btn.disabled=true; btn.innerHTML='<i class="fa fa-spinner fa-spin"></i>';
-    try {
-        const res = await fetch(SB_URL+'/calculos_motores',{method:'POST',headers:HEADERS,body:JSON.stringify(ultimoCalculo)});
-        if(!res.ok) throw new Error(await res.text());
-        mostrarAlerta('success'); cargarHistorial();
-    } catch(e){console.error(e); mostrarAlerta('error');}
-    finally{btn.disabled=false; btn.innerHTML='<i class="fa fa-save"></i> Guardar';}
+async function borrarUno(id){
+  if(!confirmar('¿Eliminar este cálculo?'))return;
+  try{await sbDel(TABLA,`?id=eq.${id}`);toast('Eliminado');cargarHist();}catch(e){toast('Error','err');}
 }
-
-async function cargarHistorial() {
-    const div = document.getElementById('historial');
-    try {
-        const res = await fetch(SB_URL+'/calculos_motores?order=created_at.desc&limit=15',{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
-        const data = await res.json();
-        if(!Array.isArray(data)||!data.length){div.innerHTML='<div class="empty-state">No hay cálculos guardados aún</div>';return;}
-        div.innerHTML=data.map(c=>`
-            <div class="hist-item">
-                <i class="fa fa-gear" style="color:#00d4ff"></i>
-                <strong>${c.hp} HP</strong> / ${c.tension}V / FS:${c.factor_servicio}
-                → ${c.corriente}A | ${c.calibre} | Prot. ${c.proteccion} | ${c.arranque}
-            </div>`).join('');
-    } catch(e){div.innerHTML='<div class="empty-state">Error al cargar</div>';}
+async function borrarTodo(){
+  if(!confirmar('¿Borrar TODO el historial de motores?\nNo se puede deshacer.'))return;
+  try{await fetch(`${SB_URL}/${TABLA}?id=neq.00000000-0000-0000-0000-000000000000`,{method:'DELETE',headers:SB_H});toast('Historial eliminado');cargarHist();}catch(e){toast('Error','err');}
 }
-
-function mostrarAlerta(t){
-    const s=document.getElementById('alertSuccess'),e=document.getElementById('alertError');
-    s.style.display='none'; e.style.display='none';
-    if(t==='success'){s.style.display='block';setTimeout(()=>s.style.display='none',3500);}
-    else{e.style.display='block';setTimeout(()=>e.style.display='none',4000);}
+async function cargarHist(){
+  const div=document.getElementById('hist');
+  try{
+    const p=getProyecto();
+    const q=p?.id?`?proyecto_id=eq.${p.id}&order=created_at.desc&limit=30`:'?order=created_at.desc&limit=30';
+    const d=await sbFetch(TABLA,{query:q});
+    if(!d.length){div.innerHTML='<div class="empty">No hay cálculos guardados</div>';return;}
+    div.innerHTML=d.map(c=>`<div class="hi">
+      <i class="fa fa-gear" style="color:var(--gold);flex-shrink:0"></i>
+      <span style="flex:1"><b>${c.hp} HP</b> / ${c.tension}V / ${c.arranque}
+        → <b>${c.corriente}A</b> | ${c.kw}kW | ${c.calibre} | ${c.proteccion}</span>
+      <span style="font-size:10px;color:var(--dim);flex-shrink:0;margin:0 8px">${c.created_at?new Date(c.created_at).toLocaleString('es-MX',{dateStyle:'short',timeStyle:'short'}):''}</span>
+      <button class="bic del hi-del" onclick="borrarUno('${c.id}')" title="Eliminar"><i class="fa fa-trash"></i></button>
+    </div>`).join('');
+  }catch(e){div.innerHTML='<div class="empty">Error al cargar</div>';}
 }
-
-['hp','tension','fs','arranque'].forEach(id=>{document.getElementById(id).addEventListener('change',calcular);});
-calcular(); cargarHistorial();
+['hp','tension','arranque','fs'].forEach(id=>{
+  document.getElementById(id).addEventListener('change',calcular);
+});
+calcular();cargarHist();
 </script>
 </body>
 </html>

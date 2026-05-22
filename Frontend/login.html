@@ -1,337 +1,79 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CUED Solutions - Iniciar Sesión</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CUED Solutions — Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
-* { margin:0; padding:0; box-sizing:border-box; }
-
-body {
-    font-family: 'Inter', sans-serif;
-    background: #060e1a;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-}
-
-/* Fondo animado */
-.bg {
-    position: fixed;
-    inset: 0;
-    background:
-        radial-gradient(ellipse 80% 60% at 20% 50%, rgba(255,196,0,0.06) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 80% at 80% 30%, rgba(0,120,255,0.05) 0%, transparent 60%),
-        #060e1a;
-}
-
-.grid-lines {
-    position: fixed;
-    inset: 0;
-    background-image:
-        linear-gradient(rgba(255,196,0,0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,196,0,0.03) 1px, transparent 1px);
-    background-size: 60px 60px;
-}
-
-/* Card de login */
-.card {
-    position: relative;
-    z-index: 10;
-    width: 420px;
-    background: rgba(15, 30, 55, 0.85);
-    border: 1px solid rgba(255,196,0,0.15);
-    border-radius: 24px;
-    padding: 50px 45px;
-    backdrop-filter: blur(20px);
-    box-shadow: 0 40px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03) inset;
-    animation: fadeUp 0.6s ease;
-}
-
-@keyframes fadeUp {
-    from { opacity:0; transform:translateY(30px); }
-    to   { opacity:1; transform:translateY(0); }
-}
-
-/* Logo */
-.logo-area {
-    text-align: center;
-    margin-bottom: 35px;
-}
-
-.logo-area .logo-text {
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 38px;
-    font-weight: 700;
-    letter-spacing: 2px;
-}
-
-.logo-area .logo-text span { color: #ffc400; }
-.logo-area .logo-text .rest { color: white; }
-
-.logo-sub {
-    font-size: 10px;
-    letter-spacing: 4px;
-    color: rgba(255,255,255,0.3);
-    text-transform: uppercase;
-    margin-top: 4px;
-}
-
-.logo-divider {
-    width: 40px;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, #ffc400, transparent);
-    margin: 16px auto 0;
-}
-
-h2 {
-    text-align: center;
-    font-size: 22px;
-    font-weight: 500;
-    color: white;
-    margin-bottom: 30px;
-    letter-spacing: 0.3px;
-}
-
-/* Inputs */
-.field {
-    margin-bottom: 18px;
-}
-
-label {
-    display: block;
-    font-size: 10px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: rgba(255,255,255,0.4);
-    margin-bottom: 8px;
-}
-
-input {
-    width: 100%;
-    padding: 14px 18px;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 12px;
-    color: white;
-    font-family: 'Inter', sans-serif;
-    font-size: 15px;
-    transition: all 0.2s;
-    outline: none;
-}
-
-input:focus {
-    border-color: rgba(255,196,0,0.5);
-    background: rgba(255,196,0,0.04);
-    box-shadow: 0 0 0 3px rgba(255,196,0,0.08);
-}
-
-input::placeholder { color: rgba(255,255,255,0.2); }
-
-/* Botón */
-button {
-    width: 100%;
-    padding: 15px;
-    background: #ffc400;
-    border: none;
-    border-radius: 12px;
-    color: #060e1a;
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 16px;
-    font-weight: 700;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all 0.2s;
-    margin-top: 8px;
-}
-
-button:hover {
-    background: #ffcf33;
-    transform: translateY(-1px);
-    box-shadow: 0 8px 24px rgba(255,196,0,0.3);
-}
-
-button:active { transform: translateY(0); }
-
-button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-}
-
-/* Error */
-.error-box {
-    background: rgba(255,60,60,0.1);
-    border: 1px solid rgba(255,60,60,0.3);
-    border-radius: 10px;
-    padding: 12px 16px;
-    color: #ff8888;
-    font-size: 13px;
-    text-align: center;
-    margin-bottom: 16px;
-    display: none;
-}
-
-.error-box.show { display: block; }
-
-/* Loading spinner */
-.spinner {
-    width: 18px;
-    height: 18px;
-    border: 2px solid rgba(6,14,26,0.3);
-    border-top-color: #060e1a;
-    border-radius: 50%;
-    animation: spin 0.6s linear infinite;
-    display: inline-block;
-    vertical-align: middle;
-    margin-right: 8px;
-}
-
-@keyframes spin { to { transform: rotate(360deg); } }
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Inter',sans-serif;background:#060e1a;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.bg{position:fixed;inset:0;background:radial-gradient(ellipse 80% 60% at 20% 50%,rgba(255,196,0,.05),transparent 60%),radial-gradient(ellipse 60% 80% at 80% 30%,rgba(0,120,255,.04),transparent 60%),#060e1a;}
+.grid{position:fixed;inset:0;background-image:linear-gradient(rgba(255,196,0,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,196,0,.025) 1px,transparent 1px);background-size:60px 60px;}
+.card{position:relative;z-index:10;width:400px;background:rgba(13,30,53,.92);border:1px solid rgba(255,196,0,.15);border-radius:20px;padding:44px 40px;backdrop-filter:blur(20px);box-shadow:0 40px 80px rgba(0,0,0,.5);animation:up .5s ease;}
+@keyframes up{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+.logo{text-align:center;margin-bottom:28px;}
+.logo-t{font-family:'Rajdhani',sans-serif;font-size:34px;font-weight:700;letter-spacing:2px;}
+.logo-t span{color:#ffc400;}
+.logo-s{font-size:10px;letter-spacing:3px;color:rgba(255,255,255,.28);text-transform:uppercase;margin-top:4px;}
+.div-line{width:36px;height:2px;background:linear-gradient(90deg,transparent,#ffc400,transparent);margin:12px auto 0;}
+h2{text-align:center;font-size:20px;font-weight:500;color:white;margin-bottom:24px;}
+.field{margin-bottom:15px;}
+label{display:block;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.38);margin-bottom:6px;}
+input{width:100%;padding:13px 15px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;color:white;font-family:'Inter',sans-serif;font-size:14px;transition:all .2s;outline:none;}
+input:focus{border-color:rgba(255,196,0,.45);background:rgba(255,196,0,.03);}
+input::placeholder{color:rgba(255,255,255,.17);}
+button{width:100%;padding:13px;background:#ffc400;border:none;border-radius:10px;color:#060e1a;font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s;margin-top:6px;display:flex;align-items:center;justify-content:center;gap:8px;}
+button:hover{background:#ffd333;transform:translateY(-1px);}
+button:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+.err{background:rgba(255,60,60,.1);border:1px solid rgba(255,60,60,.3);border-radius:8px;padding:10px 14px;color:#ff8888;font-size:12px;text-align:center;margin-bottom:12px;display:none;}
+.err.show{display:block;}
+.spin{width:16px;height:16px;border:2px solid rgba(6,14,26,.3);border-top-color:#060e1a;border-radius:50%;animation:s .6s linear infinite;display:inline-block;}
+@keyframes s{to{transform:rotate(360deg)}}
+.hint{text-align:center;font-size:11px;color:rgba(255,255,255,.18);margin-top:18px;}
 </style>
 </head>
 <body>
-
 <div class="bg"></div>
-<div class="grid-lines"></div>
-
+<div class="grid"></div>
 <div class="card">
-
-    <div class="logo-area">
-        <div class="logo-text"><span>CUED</span><span class="rest"> Solutions</span></div>
-        <div class="logo-sub">Engineering Process Optimization</div>
-        <div class="logo-divider"></div>
-    </div>
-
-    <h2>Bienvenido de nuevo</h2>
-
-    <div class="error-box" id="errorBox"></div>
-
-    <div class="field">
-        <label>Usuario</label>
-        <input id="user" type="text" placeholder="admin" value="admin" autocomplete="username">
-    </div>
-
-    <div class="field">
-        <label>Contraseña</label>
-        <input id="pass" type="password" placeholder="••••••••" autocomplete="current-password">
-    </div>
-
-    <button id="btn" onclick="login()">Iniciar Sesión</button>
-
+  <div class="logo">
+    <div class="logo-t"><span>CUED</span> Solutions</div>
+    <div class="logo-s">Engineering Process Optimization</div>
+    <div class="div-line"></div>
+  </div>
+  <h2>Bienvenido</h2>
+  <div class="err" id="err"></div>
+  <div class="field"><label>Usuario</label><input id="usr" type="text" placeholder="admin" value="admin" autocomplete="username"></div>
+  <div class="field"><label>Contraseña</label><input id="pwd" type="password" placeholder="••••••••" autocomplete="current-password"></div>
+  <button id="btn" onclick="login()"><i class="fa fa-arrow-right-to-bracket"></i> Iniciar Sesión</button>
+  <div class="hint">CUED Solutions · GI Electromecanica · Tijuana</div>
 </div>
-
 <script>
-const SUPABASE_URL = 'https://tazheiutbleaexmcsopy.supabase.co/rest/v1';
-const SUPABASE_KEY = 'sb_publishable_i5hoZ9cKYlksVhpMcee_-Q_LQes-FOK';
-
-// Si ya está logueado, ir al dashboard
-if(localStorage.getItem('cued_user')) {
-    window.location.href = 'dashboard.html';
+const SB_URL='https://tazheiutbleaexmcsopy.supabase.co/rest/v1';
+const SB_KEY='sb_publishable_i5hoZ9cKYlksVhpMcee_-Q_LQes-FOK';
+if(localStorage.getItem('cued_user')) window.location.href='proyectos.html';
+document.getElementById('pwd').addEventListener('keydown',e=>{ if(e.key==='Enter') login(); });
+async function login(){
+    const usr=document.getElementById('usr').value.trim();
+    const pwd=document.getElementById('pwd').value;
+    const btn=document.getElementById('btn');
+    const err=document.getElementById('err');
+    if(!usr||!pwd){showE('Ingresa usuario y contraseña');return;}
+    btn.disabled=true; btn.innerHTML='<span class="spin"></span> Verificando...';
+    err.classList.remove('show');
+    try{
+        const res=await fetch(`${SB_URL}/usuarios?username=eq.${encodeURIComponent(usr)}&select=*`,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
+        const data=await res.json();
+        if(!data||!data.length){showE('Usuario no encontrado');return;}
+        const u=data[0];
+        if(pwd!==u.password){showE('Contraseña incorrecta');return;}
+        localStorage.setItem('cued_user',JSON.stringify({id:u.id,nombre:u.nombre||u.username,rol:u.rol||'tecnico',username:u.username}));
+        window.location.href='proyectos.html';
+    }catch(e){showE('Error de conexión. Verifica internet.');}
+    finally{btn.disabled=false;btn.innerHTML='<i class="fa fa-arrow-right-to-bracket"></i> Iniciar Sesión';}
 }
-
-// Login con Enter
-document.getElementById('pass').addEventListener('keydown', e => {
-    if(e.key === 'Enter') login();
-});
-
-async function login() {
-    const username = document.getElementById('user').value.trim();
-    const password = document.getElementById('pass').value;
-    const btn = document.getElementById('btn');
-    const errorBox = document.getElementById('errorBox');
-
-    if(!username || !password) {
-        showError('Por favor ingresa usuario y contraseña');
-        return;
-    }
-
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span>Verificando...';
-    errorBox.classList.remove('show');
-
-    try {
-        // Buscar usuario en Supabase
-        const res = await fetch(`${SUPABASE_URL}/usuarios?username=eq.${encodeURIComponent(username)}&select=*`, {
-            headers: {
-                'apikey': SUPABASE_KEY,
-                'Authorization': `Bearer ${SUPABASE_KEY}`
-            }
-        });
-
-        const data = await res.json();
-
-        if (!data || data.length === 0) {
-            showError('Usuario no encontrado');
-            return;
-        }
-
-        const user = data[0];
-
-        // Verificar contraseña con el backend
-        // Si no hay backend, usamos comparación simple para desarrollo
-        let valid = false;
-
-        try {
-            const loginRes = await fetch('http://localhost:3000/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password }),
-                signal: AbortSignal.timeout(3000)
-            });
-            const loginData = await loginRes.json();
-            valid = loginData.success;
-            if(valid && loginData.token) {
-                localStorage.setItem('token', loginData.token);
-            }
-        } catch(backendErr) {
-            // Backend no disponible - modo demo (solo para desarrollo)
-            console.warn('Backend no disponible, usando modo demo');
-            // Para modo demo, acepta usuario "admin" con cualquier contraseña
-            // EN PRODUCCIÓN: siempre usar el backend
-           // Comparación directa (modo demo sin backend)
-        valid = (password === user.password);
-
-            }
-
-        if(!valid) {
-            showError('Contraseña incorrecta');
-            return;
-        }
-
-        // Guardar sesión
-        localStorage.setItem('cued_user', JSON.stringify({
-            id: user.id,
-            nombre: user.nombre || user.username,
-            rol: user.rol || 'admin',
-            username: user.username
-        }));
-
-        // Redirigir
-        window.location.href = 'dashboard.html';
-
-    } catch(err) {
-        console.error(err);
-        showError('Error de conexión. Verifica tu internet.');
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = 'Iniciar Sesión';
-    }
-}
-
-function showError(msg) {
-    const box = document.getElementById('errorBox');
-    box.textContent = msg;
-    box.classList.add('show');
-    document.getElementById('btn').disabled = false;
-    document.getElementById('btn').innerHTML = 'Iniciar Sesión';
-}
+function showE(m){const e=document.getElementById('err');e.textContent=m;e.classList.add('show');document.getElementById('btn').disabled=false;document.getElementById('btn').innerHTML='<i class="fa fa-arrow-right-to-bracket"></i> Iniciar Sesión';}
 </script>
-
 </body>
 </html>

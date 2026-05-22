@@ -1,166 +1,171 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CUED - Gas / Aire</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CUED - Gas y Aire</title>
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
-.calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
-.result-card{background:#0f1f38;border:1px solid rgba(100,200,255,0.15);border-radius:16px;padding:28px;text-align:center;}
-.result-big{font-family:'Rajdhani',sans-serif;font-size:64px;font-weight:700;color:#64c8ff;line-height:1;}
-.info-box{background:rgba(100,200,255,0.05);border:1px solid rgba(100,200,255,0.1);border-radius:12px;padding:16px;margin-top:20px;font-size:12px;color:rgba(255,255,255,0.45);line-height:1.7;text-align:left;}
-.hist-scroll{max-height:220px;overflow-y:auto;}
+.cg{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.rc{background:#0f1f38;border:1px solid rgba(100,200,255,.18);border-radius:13px;padding:26px;text-align:center;}
+.rb{font-family:'Rajdhani',sans-serif;font-size:66px;font-weight:700;color:#64c8ff;line-height:1;}
+.hi{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:7px;font-size:12px;border-bottom:1px solid var(--border);}
+.hi:last-child{border:none;}.hi:hover{background:rgba(255,255,255,.03);}
+.hi-del{opacity:0;transition:opacity .15s;margin-left:auto;flex-shrink:0;}
+.hi:hover .hi-del{opacity:1;}
 </style>
 </head>
 <body>
 <div id="sidebar-container"></div>
 <div class="main">
-    <div class="page-header">
-        <div class="page-title">
-            <h1><i class="fa fa-wind" style="color:#64c8ff;margin-right:10px"></i>Gas y Aire Comprimido</h1>
-            <p>Cálculo de redes de gas LP, natural y aire industrial.</p>
-        </div>
+  <div class="ph">
+    <div class="ph-left">
+      <h1><i class="fa fa-wind" style="color:var(--gold);margin-right:8px"></i>Gas y Aire Comprimido</h1>
+      <p>Dimensionamiento de redes — NOM-004-SEDG / Gas LP, Natural y Aire industrial.</p>
     </div>
-    <div class="calc-grid">
-        <div class="card">
-            <h3>Parámetros del Sistema</h3>
-            <label>Tipo de Gas</label>
-            <select id="tipoGas">
-                <option value="lp">Gas LP (Propano / Butano)</option>
-                <option value="natural">Gas Natural</option>
-                <option value="aire">Aire Comprimido</option>
-            </select>
-            <label>Consumo Total (MJ/hr — o SCFM si es Aire)</label>
-            <input id="consumo" type="number" value="100" min="1" placeholder="MJ/hr">
-            <label>Longitud de Red (m)</label>
-            <input id="longitud" type="number" value="25" min="1" placeholder="metros">
-            <label>Presión de Suministro (kPa)</label>
-            <select id="presion">
-                <option value="2.8">2.8 kPa — Baja presión doméstica</option>
-                <option value="7">7 kPa — Media-baja</option>
-                <option value="30">30 kPa — Media presión</option>
-                <option value="100">100 kPa — Industrial</option>
-            </select>
-            <label>Caída de Presión Permitida (%)</label>
-            <input id="caida" type="number" value="10" min="1" max="30">
-            <div style="margin-top:24px;display:flex;gap:12px;">
-                <button class="btn-primary" onclick="calcular()" style="flex:1">
-                    <i class="fa fa-calculator"></i> Calcular
-                </button>
-                <button class="btn-secondary" id="btnGuardar" onclick="guardar()">
-                    <i class="fa fa-save"></i> Guardar
-                </button>
-            </div>
-            <div id="alertSuccess" class="alert-success" style="margin-top:12px;display:none">
-                <i class="fa fa-circle-check"></i> Guardado correctamente en Supabase
-            </div>
-            <div id="alertError" class="alert-error" style="margin-top:12px;display:none">
-                <i class="fa fa-circle-xmark"></i> Error al guardar
-            </div>
-        </div>
-        <div class="result-card">
-            <div class="result-label">Diámetro de Tubería</div>
-            <div class="result-big" id="diametro">—</div>
-            <div class="mini-cards" style="margin-top:28px">
-                <div class="mini-card"><div class="mini-label">Caudal</div><div class="mini-val" id="caudal">—</div></div>
-                <div class="mini-card"><div class="mini-label">Velocidad</div><div class="mini-val" id="velocidad">—</div></div>
-            </div>
-            <div class="info-box" id="infoBox">
-                Completa los parámetros y presiona Calcular para obtener el dimensionamiento de tu red.
-            </div>
-        </div>
+    <div class="ph-right">
+      <button class="btn btn-d" onclick="limpiar()"><i class="fa fa-eraser"></i> Limpiar todo</button>
     </div>
-    <div class="card" style="margin-top:24px">
-        <h3>Historial de Cálculos</h3>
-        <div class="hist-scroll" id="historial"><div class="empty-state">Cargando historial...</div></div>
+  </div>
+  <div class="cg">
+    <div class="card">
+      <div class="card-t"><i class="fa fa-sliders"></i> Parámetros del sistema</div>
+      <span class="flabel">Tipo de gas</span>
+      <select id="tipoGas">
+        <option value="lp">Gas LP (Propano/Butano)</option>
+        <option value="natural">Gas Natural (Metano)</option>
+        <option value="aire">Aire Comprimido industrial</option>
+      </select>
+      <span class="flabel">Consumo total (MJ/hr — o SCFM si es aire)</span>
+      <input id="consumo" type="number" value="100" min="1" placeholder="MJ/hr">
+      <span class="flabel">Longitud de la red (metros)</span>
+      <input id="longitud" type="number" value="25" min="1">
+      <span class="flabel">Presión de suministro (kPa)</span>
+      <select id="presion">
+        <option value="2.8">2.8 kPa — Baja presión doméstica</option>
+        <option value="7">7 kPa — Media-baja</option>
+        <option value="30">30 kPa — Media presión</option>
+        <option value="100">100 kPa — Industrial</option>
+      </select>
+      <span class="flabel">Caída de presión permitida (%)</span>
+      <input id="caida" type="number" value="10" min="1" max="30" placeholder="10">
+      <div style="display:flex;gap:9px;margin-top:18px">
+        <button class="btn btn-p" onclick="calcular()" style="flex:1"><i class="fa fa-calculator"></i> Calcular</button>
+        <button class="btn btn-s" id="btnG" onclick="guardar()"><i class="fa fa-save"></i> Guardar</button>
+      </div>
+      <div id="aok" class="a-ok" style="margin-top:10px"><i class="fa fa-circle-check"></i> Guardado en Supabase</div>
+      <div id="aerr" class="a-err" style="margin-top:10px"><i class="fa fa-circle-xmark"></i> Error al guardar</div>
     </div>
+    <div class="rc">
+      <div class="rl">Diámetro de Tubería</div>
+      <div class="rb" id="diametro">—</div>
+      <div class="mc-grid" style="margin-top:22px">
+        <div class="mc"><div class="mc-l">Caudal</div><div class="mc-v" id="caudal">—</div></div>
+        <div class="mc"><div class="mc-l">Velocidad</div><div class="mc-v" id="velocidad">—</div></div>
+        <div class="mc"><div class="mc-l">Tipo</div><div class="mc-v" id="tipoTag">—</div></div>
+        <div class="mc"><div class="mc-l">Norma</div><div class="mc-v" id="norma" style="font-size:10px">—</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:18px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div class="card-t" style="margin:0"><i class="fa fa-clock-rotate-left"></i> Historial</div>
+      <button class="btn btn-d" style="padding:6px 12px;font-size:12px" onclick="borrarTodo()"><i class="fa fa-trash"></i> Borrar todo</button>
+    </div>
+    <div class="hs" id="hist"><div class="empty">Cargando historial...</div></div>
+  </div>
 </div>
 <script src="config.js"></script>
 <script src="sidebar.js"></script>
 <script>
-document.getElementById('sidebar-container').innerHTML = renderSidebar('gas');
-const SB_URL='https://tazheiutbleaexmcsopy.supabase.co/rest/v1';
-const SB_KEY='sb_publishable_i5hoZ9cKYlksVhpMcee_-Q_LQes-FOK';
-const SB_HEADERS={'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=representation'};
-let ultimoCalculo=null;
+initSidebar('gas');
+const TABLA='calculos_gas';
+let uc=null;
 function calcular(){
-    const tipo=document.getElementById('tipoGas').value;
-    const consumo=parseFloat(document.getElementById('consumo').value);
-    const longitud=parseFloat(document.getElementById('longitud').value);
-    const presion=parseFloat(document.getElementById('presion').value);
-    const caida=parseFloat(document.getElementById('caida').value)/100;
-    if(!consumo||!longitud) return;
-    let caudal_str,velocidad_str,diametro,norma;
-    if(tipo==='aire'){
-        const caudal_m3h=consumo*1.699;
-        const velocidad_max=6;
-        const area=caudal_m3h/3600/velocidad_max;
-        const d_calc=Math.sqrt(4*area/Math.PI)*1000;
-        let d_real=15; diametro='1/2"';
-        if(d_calc>15){diametro='3/4"';  d_real=20;} if(d_calc>20){diametro='1"';      d_real=25;}
-        if(d_calc>25){diametro='1 1/4"';d_real=32;} if(d_calc>32){diametro='1 1/2"'; d_real=40;}
-        if(d_calc>40){diametro='2"';     d_real=50;} if(d_calc>50){diametro='2 1/2"'; d_real=63;}
-        const vel=caudal_m3h/3600/(Math.PI*Math.pow(d_real/2000,2));
-        caudal_str=caudal_m3h.toFixed(1)+' m³/h'; velocidad_str=vel.toFixed(1)+' m/s'; norma='NOM-011-STPS-2001';
-    } else {
-        const poderCal=tipo==='lp'?93.5:37.3;
-        const caudal_m3h=consumo/poderCal;
-        const dp=presion*caida;
-        let d_calc=15*Math.pow(caudal_m3h*longitud/(dp*presion+0.001),0.2);
-        let d_real=12.7; diametro='1/2"';
-        if(d_calc>12.7){diametro='3/4"';  d_real=19;} if(d_calc>19){diametro='1"';      d_real=25;}
-        if(d_calc>25)  {diametro='1 1/4"';d_real=32;} if(d_calc>32){diametro='1 1/2"'; d_real=38;}
-        if(d_calc>38)  {diametro='2"';     d_real=50;} if(d_calc>50){diametro='2 1/2"'; d_real=63;}
-        const vel=caudal_m3h/3600/(Math.PI*Math.pow(d_real/2000,2));
-        caudal_str=caudal_m3h.toFixed(2)+' m³/h'; velocidad_str=vel.toFixed(1)+' m/s';
-        norma=tipo==='lp'?'NOM-004-SEDG-2004':'NOM-004-SEDG / CFE';
-    }
-    document.getElementById('diametro').textContent=diametro;
-    document.getElementById('caudal').textContent=caudal_str;
-    document.getElementById('velocidad').textContent=velocidad_str;
-    document.getElementById('infoBox').textContent='Norma aplicable: '+norma+'. Caudal calculado con base en el consumo declarado. Verificar con proveedor de gas local antes de ejecutar.';
-    ultimoCalculo={tipo_gas:tipo,consumo,longitud,presion_kpa:presion,diametro,caudal:caudal_str};
+  const tipo=document.getElementById('tipoGas').value;
+  const consumo=parseFloat(document.getElementById('consumo').value);
+  const longitud=parseFloat(document.getElementById('longitud').value);
+  const presion=parseFloat(document.getElementById('presion').value);
+  const caida=parseFloat(document.getElementById('caida').value)/100;
+  if(!consumo||!longitud)return;
+  let caudal_str,velocidad_str,diametro,norma;
+  if(tipo==='aire'){
+    const q_m3h=consumo*1.699;
+    const v_max=6;
+    const area=q_m3h/3600/v_max;
+    const d_calc=Math.sqrt(4*area/Math.PI)*1000;
+    let d_real=15;diametro='1/2"';
+    if(d_calc>15){diametro='3/4"';d_real=20;}if(d_calc>20){diametro='1"';d_real=25;}
+    if(d_calc>25){diametro='1-1/4"';d_real=32;}if(d_calc>32){diametro='1-1/2"';d_real=40;}
+    if(d_calc>40){diametro='2"';d_real=50;}if(d_calc>50){diametro='2-1/2"';d_real=63;}
+    const vel=(q_m3h/3600/(Math.PI*Math.pow(d_real/2000,2))).toFixed(1);
+    caudal_str=q_m3h.toFixed(1)+' m³/h';velocidad_str=vel+' m/s';norma='NOM-011-STPS-2001';
+  }else{
+    const poderCal=tipo==='lp'?93.5:37.3;
+    const q_m3h=consumo/poderCal;
+    const dp=presion*caida;
+    let d_calc=15*Math.pow((q_m3h*longitud)/(dp*presion+0.001),0.2);
+    let d_real=12.7;diametro='1/2"';
+    if(d_calc>12.7){diametro='3/4"';d_real=19;}if(d_calc>19){diametro='1"';d_real=25;}
+    if(d_calc>25){diametro='1-1/4"';d_real=32;}if(d_calc>32){diametro='1-1/2"';d_real=38;}
+    if(d_calc>38){diametro='2"';d_real=50;}if(d_calc>50){diametro='2-1/2"';d_real=63;}
+    const vel=(q_m3h/3600/(Math.PI*Math.pow(d_real/2000,2))).toFixed(1);
+    caudal_str=q_m3h.toFixed(3)+' m³/h';velocidad_str=vel+' m/s';
+    norma=tipo==='lp'?'NOM-004-SEDG-2004':'NOM-004-SEDG/CFE';
+  }
+  const labels={lp:'Gas LP',natural:'Gas Natural',aire:'Aire Comprimido'};
+  document.getElementById('diametro').textContent=diametro;
+  document.getElementById('caudal').textContent=caudal_str;
+  document.getElementById('velocidad').textContent=velocidad_str;
+  document.getElementById('tipoTag').textContent=labels[tipo];
+  document.getElementById('norma').textContent=norma;
+  const p=getProyecto();
+  uc={tipo_gas:tipo,consumo,longitud,presion_kpa:presion,diametro,caudal:caudal_str,proyecto_id:p?.id||null};
+}
+function limpiar(){
+  document.getElementById('tipoGas').selectedIndex=0;document.getElementById('consumo').value=100;
+  document.getElementById('longitud').value=25;document.getElementById('presion').selectedIndex=0;
+  document.getElementById('caida').value=10;
+  document.getElementById('diametro').textContent='—';
+  ['caudal','velocidad','tipoTag','norma'].forEach(id=>document.getElementById(id).textContent='—');
+  uc=null;toast('Formulario limpiado');
 }
 async function guardar(){
-    if(!ultimoCalculo){calcular();}
-    if(!ultimoCalculo){alert('Primero realiza un cálculo');return;}
-    const btn=document.getElementById('btnGuardar');
-    btn.disabled=true; btn.innerHTML='<i class="fa fa-spinner fa-spin"></i> Guardando...';
-    try{
-        const res=await fetch(SB_URL+'/calculos_gas',{method:'POST',headers:SB_HEADERS,body:JSON.stringify(ultimoCalculo)});
-        if(!res.ok) throw new Error(await res.text());
-        mostrarAlerta('success'); cargarHistorial();
-    }catch(err){console.error(err);mostrarAlerta('error');}
-    finally{btn.disabled=false;btn.innerHTML='<i class="fa fa-save"></i> Guardar';}
+  if(!uc){calcular();}if(!uc)return;
+  const btn=document.getElementById('btnG');btn.disabled=true;btn.innerHTML='<i class="fa fa-spinner fa-spin"></i>';
+  try{await sbFetch(TABLA,{method:'POST',body:uc});toast('Guardado');showA('aok');cargarHist();}
+  catch(e){toast('Error','err');showA('aerr');}
+  finally{btn.disabled=false;btn.innerHTML='<i class="fa fa-save"></i> Guardar';}
 }
-async function cargarHistorial(){
-    const div=document.getElementById('historial');
-    try{
-        const res=await fetch(SB_URL+'/calculos_gas?order=created_at.desc&limit=15',{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
-        if(!res.ok) throw new Error('Error '+res.status);
-        const data=await res.json();
-        if(!Array.isArray(data)||!data.length){div.innerHTML='<div class="empty-state">No hay cálculos guardados aún</div>';return;}
-        const tipoLabel={lp:'Gas LP',natural:'Gas Natural',aire:'Aire Comprimido'};
-        div.innerHTML=data.map(c=>`<div class="hist-item">
-            <i class="fa fa-wind" style="color:#64c8ff"></i>
-            <strong>${tipoLabel[c.tipo_gas]||c.tipo_gas}</strong> /
-            Consumo: ${c.consumo} / ${c.longitud} m / ${c.presion_kpa} kPa
-            → <strong>${c.diametro}</strong> | ${c.caudal}
-        </div>`).join('');
-    }catch(err){div.innerHTML='<div class="empty-state">Error al cargar historial</div>';}
+async function borrarUno(id){
+  if(!confirmar('¿Eliminar?'))return;
+  try{await sbDel(TABLA,`?id=eq.${id}`);toast('Eliminado');cargarHist();}catch(e){toast('Error','err');}
 }
-function mostrarAlerta(tipo){
-    const s=document.getElementById('alertSuccess'),e=document.getElementById('alertError');
-    s.style.display='none'; e.style.display='none';
-    if(tipo==='success'){s.style.display='block';setTimeout(()=>s.style.display='none',3500);}
-    else{e.style.display='block';setTimeout(()=>e.style.display='none',4000);}
+async function borrarTodo(){
+  if(!confirmar('¿Borrar TODO el historial de gas/aire?'))return;
+  try{await fetch(`${SB_URL}/${TABLA}?id=neq.00000000-0000-0000-0000-000000000000`,{method:'DELETE',headers:SB_H});toast('Eliminado');cargarHist();}catch(e){toast('Error','err');}
+}
+async function cargarHist(){
+  const div=document.getElementById('hist');
+  try{
+    const p=getProyecto();
+    const q=p?.id?`?proyecto_id=eq.${p.id}&order=created_at.desc&limit=30`:'?order=created_at.desc&limit=30';
+    const d=await sbFetch(TABLA,{query:q});
+    if(!d.length){div.innerHTML='<div class="empty">No hay cálculos guardados</div>';return;}
+    const lbl={lp:'Gas LP',natural:'Gas Natural',aire:'Aire'};
+    div.innerHTML=d.map(c=>`<div class="hi">
+      <i class="fa fa-wind" style="color:#64c8ff;flex-shrink:0"></i>
+      <span style="flex:1"><b>${lbl[c.tipo_gas]||c.tipo_gas}</b> / ${c.consumo} MJ/hr / ${c.longitud}m / ${c.presion_kpa}kPa → <b>${c.diametro}</b> | ${c.caudal}</span>
+      <span style="font-size:10px;color:var(--dim);flex-shrink:0;margin:0 8px">${c.created_at?new Date(c.created_at).toLocaleString('es-MX',{dateStyle:'short',timeStyle:'short'}):''}</span>
+      <button class="bic del hi-del" onclick="borrarUno('${c.id}')"><i class="fa fa-trash"></i></button>
+    </div>`).join('');
+  }catch(e){div.innerHTML='<div class="empty">Error</div>';}
 }
 ['tipoGas','consumo','longitud','presion','caida'].forEach(id=>{
-    document.getElementById(id).addEventListener('change',calcular);
-    document.getElementById(id).addEventListener('input',calcular);
+  document.getElementById(id).addEventListener('change',calcular);
+  document.getElementById(id).addEventListener('input',calcular);
 });
-calcular(); cargarHistorial();
+calcular();cargarHist();
 </script>
 </body>
 </html>

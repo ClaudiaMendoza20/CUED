@@ -1,251 +1,191 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CUED - Cálculo Sanitario</title>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CUED - Sanitario</title>
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
-.main-grid{display:grid;grid-template-columns:400px 1fr;gap:24px;}
-.mueble-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
-.mueble-row:last-child{border:none;}
-.mueble-icon{width:32px;text-align:center;font-size:16px;color:#00e0a4;}
-.mueble-info{flex:1;}
-.mueble-name{font-size:13px;font-weight:500;}
-.mueble-um{font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:1px;margin-top:2px;}
-.mueble-qty{width:70px;padding:7px 10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;color:white;font-size:14px;text-align:center;}
-.mueble-qty:focus{outline:none;border-color:rgba(0,224,164,0.4);}
-.result-card{background:#0f1f38;border:1px solid rgba(0,224,164,0.15);border-radius:16px;padding:24px;margin-bottom:20px;}
-.result-big{font-family:'Rajdhani',sans-serif;font-size:60px;font-weight:700;color:#00e0a4;line-height:1;}
-.tramos-table{width:100%;border-collapse:collapse;font-size:12px;}
-.tramos-table th{background:rgba(0,224,164,0.1);padding:8px 12px;text-align:left;font-size:10px;letter-spacing:1px;color:rgba(0,224,164,0.7);border-bottom:1px solid rgba(0,224,164,0.1);}
-.tramos-table td{padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.04);}
+.ug{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;}
+.ur{display:flex;align-items:center;gap:10px;padding:9px 11px;background:rgba(255,255,255,.03);border-radius:8px;}
+.ur label{font-size:12px;color:rgba(255,255,255,.6);flex:1;margin:0;}
+.ur input{width:75px;padding:6px 9px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);border-radius:7px;color:white;font-size:13px;text-align:center;outline:none;}
+.ur input:focus{border-color:rgba(0,224,164,.4);}
+.rc{background:#0f1f38;border:1px solid rgba(0,224,164,.18);border-radius:13px;padding:26px;text-align:center;}
+.rb{font-family:'Rajdhani',sans-serif;font-size:66px;font-weight:700;color:#00e0a4;line-height:1;}
+.hi{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:7px;font-size:12px;border-bottom:1px solid var(--border);}
+.hi:last-child{border:none;}.hi:hover{background:rgba(255,255,255,.03);}
+.hi-del{opacity:0;transition:opacity .15s;margin-left:auto;flex-shrink:0;}
+.hi:hover .hi-del{opacity:1;}
+.tramos-t{width:100%;border-collapse:collapse;font-size:12px;}
+.tramos-t th{background:rgba(0,224,164,.08);padding:7px 10px;text-align:left;font-size:10px;letter-spacing:1px;color:rgba(0,224,164,.7);}
+.tramos-t td{padding:7px 10px;border-bottom:1px solid var(--border);}
 .cumple{color:#00ff99;font-weight:600;}
-.no-cumple{color:#ff4444;font-weight:600;}
+.nocumple{color:#ff4444;font-weight:600;}
 </style>
 </head>
 <body>
 <div id="sidebar-container"></div>
-
 <div class="main">
-    <div class="page-header">
-        <div class="page-title">
-            <h1><i class="fa fa-toilet" style="color:#00e0a4;margin-right:10px"></i>Cálculo Sanitario</h1>
-            <p>Unidades Mueble, gasto de punta y diámetro de tubería por tramos.</p>
-        </div>
+  <div class="ph">
+    <div class="ph-left">
+      <h1><i class="fa fa-toilet" style="color:var(--gold);margin-right:8px"></i>Cálculo Sanitario</h1>
+      <p>Unidades Mueble (UM), gasto de punta y diámetro de tubería por tramos.</p>
     </div>
-
-    <div class="main-grid">
-        <div class="card">
-            <h3>Muebles Sanitarios</h3>
-            <p style="font-size:11px;color:rgba(255,255,255,0.3);margin-bottom:16px">Ingresa la cantidad de cada mueble en el proyecto.</p>
-            <div id="mueblesContainer"></div>
-
-            <div style="margin-top:20px;display:flex;gap:12px;">
-                <button class="btn-primary" onclick="calcular()" style="flex:1">
-                    <i class="fa fa-calculator"></i> Calcular
-                </button>
-                <button class="btn-secondary" id="btnGuardar" onclick="guardar()">
-                    <i class="fa fa-save"></i> Guardar
-                </button>
-            </div>
-            <div id="alertSuccess" class="alert-success" style="margin-top:12px;display:none">
-                <i class="fa fa-circle-check"></i> Guardado en Supabase
-            </div>
-            <div id="alertError" class="alert-error" style="margin-top:12px;display:none">
-                <i class="fa fa-circle-xmark"></i> Error al guardar
-            </div>
-        </div>
-
-        <div>
-            <div class="result-card">
-                <div class="result-label">Total Unidades Mueble</div>
-                <div class="result-big" id="totalUM">—</div>
-                <div style="color:rgba(0,224,164,0.5);font-size:13px;margin-top:4px" id="gastoTotal">— L/s gasto de punta</div>
-
-                <div class="mini-cards" style="margin-top:20px">
-                    <div class="mini-card">
-                        <div class="mini-label">Diámetro principal</div>
-                        <div class="mini-val" id="diamPrincipal">—</div>
-                    </div>
-                    <div class="mini-card">
-                        <div class="mini-label">Bajante sanitaria</div>
-                        <div class="mini-val" id="bajante">—</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <h3>Cálculo por Tramos</h3>
-                <div style="margin-bottom:12px;display:flex;align-items:center;gap:10px">
-                    <label style="margin:0;font-size:12px">Pendiente (%)</label>
-                    <select id="pendiente" style="width:120px;padding:6px 10px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;color:white;font-size:13px">
-                        <option value="1">1%</option>
-                        <option value="2" selected>2%</option>
-                        <option value="3">3%</option>
-                    </select>
-                </div>
-                <div style="overflow-x:auto">
-                    <table class="tramos-table" id="tramosTable">
-                        <thead>
-                            <tr>
-                                <th>TRAMO</th><th>UM ACUM.</th><th>GASTO (L/s)</th>
-                                <th>DIAMETRO</th><th>VELOCIDAD</th><th>ESTADO</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tramosBody">
-                            <tr><td colspan="6" class="empty-state">Ingresa muebles y calcula</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="card" style="margin-top:20px">
-                <h3>Historial</h3>
-                <div style="max-height:160px;overflow-y:auto" id="historial">
-                    <div class="empty-state">Cargando...</div>
-                </div>
-            </div>
-        </div>
+    <div class="ph-right">
+      <button class="btn btn-d" onclick="limpiar()"><i class="fa fa-eraser"></i> Limpiar todo</button>
     </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 360px;gap:18px">
+    <div class="card">
+      <div class="card-t"><i class="fa fa-sliders"></i> Muebles sanitarios del proyecto</div>
+      <p style="font-size:11px;color:var(--dim);margin-bottom:10px">Ingresa la cantidad de cada mueble.</p>
+      <div class="ug" id="muebles-container"></div>
+      <span class="flabel" style="margin-top:14px">Pendiente de tubería</span>
+      <select id="pendiente">
+        <option value="1">1%</option><option value="2" selected>2% (recomendado)</option><option value="3">3%</option>
+      </select>
+      <div style="display:flex;gap:9px;margin-top:16px">
+        <button class="btn btn-p" onclick="calcular()" style="flex:1"><i class="fa fa-calculator"></i> Calcular</button>
+        <button class="btn btn-s" id="btnG" onclick="guardar()"><i class="fa fa-save"></i> Guardar</button>
+      </div>
+      <div id="aok" class="a-ok" style="margin-top:10px"><i class="fa fa-circle-check"></i> Guardado en Supabase</div>
+      <div id="aerr" class="a-err" style="margin-top:10px"><i class="fa fa-circle-xmark"></i> Error al guardar</div>
+    </div>
+    <div>
+      <div class="rc">
+        <div class="rl">Total Unidades Mueble</div>
+        <div class="rb" id="totalUM">—</div>
+        <div style="font-size:13px;color:rgba(0,224,164,.5);margin-top:5px" id="gastoTotal">—</div>
+        <div class="mc-grid" style="margin-top:20px">
+          <div class="mc"><div class="mc-l">Ø Principal</div><div class="mc-v" id="diamPrin">—</div></div>
+          <div class="mc"><div class="mc-l">Bajante</div><div class="mc-v" id="bajante">—</div></div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:14px;overflow-x:auto">
+        <div class="card-t" style="margin-bottom:10px"><i class="fa fa-table"></i> Cálculo por tramos</div>
+        <table class="tramos-t">
+          <thead><tr><th>TRAMO</th><th>UM</th><th>Q (L/s)</th><th>DIÁM.</th><th>VEL.</th><th>ESTADO</th></tr></thead>
+          <tbody id="tramosBody"><tr><td colspan="6" class="empty">Ingresa muebles y calcula</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:18px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div class="card-t" style="margin:0"><i class="fa fa-clock-rotate-left"></i> Historial</div>
+      <button class="btn btn-d" style="padding:6px 12px;font-size:12px" onclick="borrarTodo()"><i class="fa fa-trash"></i> Borrar todo</button>
+    </div>
+    <div class="hs" id="hist"><div class="empty">Cargando historial...</div></div>
+  </div>
 </div>
-
 <script src="config.js"></script>
 <script src="sidebar.js"></script>
 <script>
-document.getElementById('sidebar-container').innerHTML = renderSidebar('sanitario');
-
-const SB_URL='https://tazheiutbleaexmcsopy.supabase.co/rest/v1';
-const SB_KEY='sb_publishable_i5hoZ9cKYlksVhpMcee_-Q_LQes-FOK';
-const HEADERS={'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=representation'};
-
-// Icono FA por tipo de mueble
-const MUEBLES = [
-    {id:'wc_fluxometro', icon:'fa-toilet',     name:'WC Fluxómetro',    um:6, qs:1.5},
-    {id:'wc_tanque',     icon:'fa-toilet',     name:'WC Tanque',        um:4, qs:0.3},
-    {id:'inodoro',       icon:'fa-toilet',     name:'Inodoro',          um:4, qs:0.3},
-    {id:'lavamanos',     icon:'fa-hand-dots',  name:'Lavamanos',        um:1, qs:0.2},
-    {id:'regadera',      icon:'fa-shower',     name:'Regadera',         um:3, qs:0.2},
-    {id:'tina',          icon:'fa-bath',       name:'Tina de baño',     um:4, qs:0.3},
-    {id:'lavadora',      icon:'fa-rotate',     name:'Lavadora',         um:4, qs:0.3},
-    {id:'sink',          icon:'fa-sink',       name:'Sink / Fregadero', um:2, qs:0.2},
-    {id:'tarja',         icon:'fa-sink',       name:'Tarja cocina',     um:2, qs:0.3},
-    {id:'llave_nariz',   icon:'fa-faucet',     name:'Llave de nariz',   um:3, qs:0.3},
-    {id:'minguitorios',  icon:'fa-toilet',     name:'Minguitorios',     um:5, qs:1.0},
-    {id:'coladera',      icon:'fa-circle-dot', name:'Coladera de piso', um:1, qs:0.1},
+initSidebar('sanitario');
+const TABLA='calculos_sanitario';
+let uc=null;
+const MUEBLES=[
+  {id:'m_wc_flux',  label:'WC Fluxómetro',    um:6, qs:1.5},
+  {id:'m_wc_tanq',  label:'WC Tanque',         um:4, qs:0.3},
+  {id:'m_lavamanos',label:'Lavamanos',          um:1, qs:0.2},
+  {id:'m_regadera', label:'Regadera',           um:3, qs:0.2},
+  {id:'m_tina',     label:'Tina de baño',       um:4, qs:0.3},
+  {id:'m_lavadora', label:'Lavadora',           um:4, qs:0.3},
+  {id:'m_fregadero',label:'Fregadero',          um:2, qs:0.3},
+  {id:'m_mingit',   label:'Mingitorio',         um:5, qs:1.0},
+  {id:'m_llave',    label:'Llave de nariz',     um:3, qs:0.3},
+  {id:'m_coladera', label:'Coladera de piso',   um:1, qs:0.1},
 ];
-
-function getDiametro(qs) {
-    if(qs<=0.1) return '1/2"'; if(qs<=0.2) return '3/4"'; if(qs<=0.5) return '1"';
-    if(qs<=1.0) return '1 1/4"'; if(qs<=1.5) return '1 1/2"'; if(qs<=2.5) return '2"';
-    if(qs<=5.0) return '3"'; if(qs<=10) return '4"'; if(qs<=20) return '6"'; return '8"';
+// Renderizar muebles
+document.getElementById('muebles-container').innerHTML=MUEBLES.map(m=>`
+  <div class="ur">
+    <label>${m.label} <span style="color:var(--dim)">(${m.um}UM/${m.qs}L/s)</span></label>
+    <input type="number" id="${m.id}" value="0" min="0" oninput="calcular()">
+  </div>`).join('');
+function getDiam(qs){
+  if(qs<=0.1)return'1/2"';if(qs<=0.2)return'3/4"';if(qs<=0.5)return'1"';
+  if(qs<=1.0)return'1-1/4"';if(qs<=1.5)return'1-1/2"';if(qs<=2.5)return'2"';
+  if(qs<=5)return'3"';if(qs<=10)return'4"';if(qs<=20)return'6"';return'8"';
 }
-
-function getVelocidad(qs, diam) {
-    const dMap = {'1/2"':0.0127,'3/4"':0.019,'1"':0.025,'1 1/4"':0.032,'1 1/2"':0.038,'2"':0.05,'3"':0.075,'4"':0.1,'6"':0.15,'8"':0.2};
-    const d = dMap[diam]||0.05;
-    const area = Math.PI*Math.pow(d/2,2);
-    return (qs/1000/area).toFixed(2);
+function getVel(qs,diam){
+  const dm={'1/2"':0.0127,'3/4"':0.019,'1"':0.025,'1-1/4"':0.032,'1-1/2"':0.038,'2"':0.05,'3"':0.075,'4"':0.1,'6"':0.15,'8"':0.2};
+  const d=dm[diam]||0.05;
+  return(qs/1000/(Math.PI*Math.pow(d/2,2))).toFixed(2);
 }
-
-function renderMuebles() {
-    document.getElementById('mueblesContainer').innerHTML = MUEBLES.map(m=>`
-        <div class="mueble-row">
-            <div class="mueble-icon"><i class="fa ${m.icon}"></i></div>
-            <div class="mueble-info">
-                <div class="mueble-name">${m.name}</div>
-                <div class="mueble-um">${m.um} U.M. | ${m.qs} L/s</div>
-            </div>
-            <input class="mueble-qty" type="number" id="m_${m.id}" value="0" min="0" oninput="calcular()">
-        </div>`).join('');
+function calcular(){
+  let totalUM=0,totalQs=0;
+  MUEBLES.forEach(m=>{
+    const c=parseInt(document.getElementById(m.id).value)||0;
+    if(c>0){totalUM+=m.um*c;totalQs+=m.qs*c;}
+  });
+  if(totalUM===0){
+    document.getElementById('totalUM').textContent='—';
+    document.getElementById('gastoTotal').textContent='Ingresa muebles';
+    document.getElementById('tramosBody').innerHTML='<tr><td colspan="6" class="empty">Ingresa muebles y calcula</td></tr>';
+    return;
+  }
+  const qPunta=Math.sqrt(totalQs);
+  const diamPrin=getDiam(qPunta);
+  let bajante='4"';if(totalUM>240)bajante='6"';if(totalUM>480)bajante='8"';
+  document.getElementById('totalUM').textContent=totalUM;
+  document.getElementById('gastoTotal').textContent='Q punta = '+qPunta.toFixed(3)+' L/s';
+  document.getElementById('diamPrin').textContent=diamPrin;
+  document.getElementById('bajante').textContent=bajante;
+  const pasos=Math.min(8,Math.ceil(totalUM/10));
+  let rows='';
+  for(let i=1;i<=pasos;i++){
+    const umT=Math.round(totalUM/pasos*i);
+    const qsT=Math.sqrt(totalQs*(i/pasos));
+    const d=getDiam(qsT);
+    const v=parseFloat(getVel(qsT,d));
+    const ok=v>=0.6&&v<=3.0;
+    rows+=`<tr><td>T${i-1}→T${i}</td><td>${umT}</td><td>${qsT.toFixed(3)}</td><td>${d}</td><td>${v} m/s</td>
+      <td class="${ok?'cumple':'nocumple'}">${ok?'✓ OK':'✗ Rev.'}</td></tr>`;
+  }
+  document.getElementById('tramosBody').innerHTML=rows;
+  const p=getProyecto();
+  uc={total_um:totalUM,gasto_punta:qPunta.toFixed(3),diametro_principal:diamPrin,bajante_sanitaria:bajante,detalle:JSON.stringify(Object.fromEntries(MUEBLES.map(m=>[m.id,parseInt(document.getElementById(m.id).value)||0]))),proyecto_id:p?.id||null};
 }
-
-let ultimoCalculo = null;
-
-function calcular() {
-    let totalUM = 0, totalQs = 0;
-    const detalle = {};
-
-    MUEBLES.forEach(m=>{
-        const cant = parseInt(document.getElementById('m_'+m.id).value)||0;
-        if(cant>0){ totalUM += m.um*cant; totalQs += m.qs*cant; detalle[m.id]=cant; }
-    });
-
-    if(totalUM===0){
-        document.getElementById('totalUM').textContent='—';
-        document.getElementById('gastoTotal').textContent='Ingresa muebles';
-        document.getElementById('tramosBody').innerHTML='<tr><td colspan="6" class="empty-state">Ingresa muebles y calcula</td></tr>';
-        return;
-    }
-
-    const qPunta        = Math.sqrt(totalQs);
-    const diamPrincipal = getDiametro(qPunta);
-    let bajante = '4"';
-    if(totalUM>240) bajante='6"';
-    if(totalUM>480) bajante='8"';
-
-    document.getElementById('totalUM').textContent       = totalUM;
-    document.getElementById('gastoTotal').textContent    = qPunta.toFixed(3)+' L/s gasto de punta';
-    document.getElementById('diamPrincipal').textContent = diamPrincipal;
-    document.getElementById('bajante').textContent       = bajante;
-
-    const pasos = Math.min(10, Math.ceil(totalUM/10));
-    let rows = '';
-    for(let i=1;i<=pasos;i++){
-        const umTramo = Math.round((totalUM/pasos)*i);
-        const qsTramo = Math.sqrt(totalQs*(i/pasos));
-        const diam    = getDiametro(qsTramo);
-        const vel     = parseFloat(getVelocidad(qsTramo,diam));
-        const ok      = vel>=0.6&&vel<=3.0;
-        rows += `<tr>
-            <td>T${i-1}-T${i}</td><td>${umTramo}</td><td>${qsTramo.toFixed(3)}</td>
-            <td>${diam}</td><td>${vel} m/s</td>
-            <td>${ok
-                ? '<span class="cumple"><i class="fa fa-circle-check"></i> OK</span>'
-                : '<span class="no-cumple"><i class="fa fa-circle-xmark"></i> Revisar</span>'}</td>
-        </tr>`;
-    }
-    document.getElementById('tramosBody').innerHTML = rows;
-
-    ultimoCalculo = { total_um:totalUM, gasto_punta:qPunta.toFixed(3), diametro_principal:diamPrincipal, bajante_sanitaria:bajante, detalle:JSON.stringify(detalle) };
+function limpiar(){
+  MUEBLES.forEach(m=>document.getElementById(m.id).value=0);
+  document.getElementById('totalUM').textContent='—';
+  document.getElementById('gastoTotal').textContent='—';
+  ['diamPrin','bajante'].forEach(id=>document.getElementById(id).textContent='—');
+  document.getElementById('tramosBody').innerHTML='<tr><td colspan="6" class="empty">Ingresa muebles y calcula</td></tr>';
+  uc=null;toast('Formulario limpiado');
 }
-
-async function guardar() {
-    if(!ultimoCalculo) return;
-    const btn=document.getElementById('btnGuardar');
-    btn.disabled=true; btn.innerHTML='<i class="fa fa-spinner fa-spin"></i>';
-    try{
-        const res=await fetch(SB_URL+'/calculos_sanitario',{method:'POST',headers:HEADERS,body:JSON.stringify(ultimoCalculo)});
-        if(!res.ok) throw new Error(await res.text());
-        mostrarAlerta('success'); cargarHistorial();
-    }catch(e){console.error(e); mostrarAlerta('error');}
-    finally{btn.disabled=false; btn.innerHTML='<i class="fa fa-save"></i> Guardar';}
+async function guardar(){
+  if(!uc){calcular();}if(!uc)return;
+  const btn=document.getElementById('btnG');btn.disabled=true;btn.innerHTML='<i class="fa fa-spinner fa-spin"></i>';
+  try{await sbFetch(TABLA,{method:'POST',body:uc});toast('Guardado');showA('aok');cargarHist();}
+  catch(e){toast('Error','err');showA('aerr');}
+  finally{btn.disabled=false;btn.innerHTML='<i class="fa fa-save"></i> Guardar';}
 }
-
-async function cargarHistorial() {
-    const div=document.getElementById('historial');
-    try{
-        const res=await fetch(SB_URL+'/calculos_sanitario?order=created_at.desc&limit=10',{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}});
-        const data=await res.json();
-        if(!Array.isArray(data)||!data.length){div.innerHTML='<div class="empty-state">No hay cálculos</div>';return;}
-        div.innerHTML=data.map(c=>`
-            <div class="hist-item">
-                <i class="fa fa-shower" style="color:#00e0a4"></i>
-                <strong>${c.total_um} U.M.</strong>
-                → Q punta: ${c.gasto_punta} L/s | Ø${c.diametro_principal} | Bajante ${c.bajante_sanitaria}
-            </div>`).join('');
-    }catch(e){div.innerHTML='<div class="empty-state">Error</div>';}
+async function borrarUno(id){
+  if(!confirmar('¿Eliminar?'))return;
+  try{await sbDel(TABLA,`?id=eq.${id}`);toast('Eliminado');cargarHist();}catch(e){toast('Error','err');}
 }
-
-function mostrarAlerta(t){
-    const s=document.getElementById('alertSuccess'),e=document.getElementById('alertError');
-    s.style.display='none'; e.style.display='none';
-    if(t==='success'){s.style.display='block';setTimeout(()=>s.style.display='none',3500);}
-    else{e.style.display='block';setTimeout(()=>e.style.display='none',4000);}
+async function borrarTodo(){
+  if(!confirmar('¿Borrar TODO el historial sanitario?'))return;
+  try{await fetch(`${SB_URL}/${TABLA}?id=neq.00000000-0000-0000-0000-000000000000`,{method:'DELETE',headers:SB_H});toast('Eliminado');cargarHist();}catch(e){toast('Error','err');}
 }
-
-renderMuebles(); calcular(); cargarHistorial();
-document.getElementById('pendiente').addEventListener('change', calcular);
+async function cargarHist(){
+  const div=document.getElementById('hist');
+  try{
+    const p=getProyecto();
+    const q=p?.id?`?proyecto_id=eq.${p.id}&order=created_at.desc&limit=30`:'?order=created_at.desc&limit=30';
+    const d=await sbFetch(TABLA,{query:q});
+    if(!d.length){div.innerHTML='<div class="empty">No hay cálculos guardados</div>';return;}
+    div.innerHTML=d.map(c=>`<div class="hi">
+      <i class="fa fa-toilet" style="color:#00e0a4;flex-shrink:0"></i>
+      <span style="flex:1"><b>${c.total_um} UM</b> → Q punta=${c.gasto_punta} L/s | Ø${c.diametro_principal} | Bajante ${c.bajante_sanitaria}</span>
+      <span style="font-size:10px;color:var(--dim);flex-shrink:0;margin:0 8px">${c.created_at?new Date(c.created_at).toLocaleString('es-MX',{dateStyle:'short',timeStyle:'short'}):''}</span>
+      <button class="bic del hi-del" onclick="borrarUno('${c.id}')"><i class="fa fa-trash"></i></button>
+    </div>`).join('');
+  }catch(e){div.innerHTML='<div class="empty">Error</div>';}
+}
+calcular();cargarHist();
 </script>
 </body>
 </html>
